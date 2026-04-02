@@ -69,7 +69,7 @@ function DealCard({ deal, onStageChange }) {
   const payment = PAYMENT_BADGE[deal.paymentStatus];
 
   return (
-    <div className="deal-card">
+    <div className="deal-card" style={{ borderLeft: `3px solid ${stageColor}` }}>
       <div className="deal-card-header" onClick={() => setExpanded((e) => !e)}>
         <div className="deal-brand-row">
           <div className="deal-logo" style={{ background: deal.logoColor }}>

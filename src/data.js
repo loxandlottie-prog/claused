@@ -100,6 +100,7 @@ export const inbound = [
     date: "2026-04-01",
     estimatedValue: "2,000–4,000",
     category: "pet services",
+    lastContacted: { name: "Jamie R. (Meowtel Partnerships)", date: "2026-04-01" },
   },
   {
     id: 2,
@@ -111,6 +112,7 @@ export const inbound = [
     date: "2026-03-31",
     estimatedValue: "1,500–3,000",
     category: "water fountains",
+    lastContacted: { name: "catit_official", date: "2026-03-31" },
   },
   {
     id: 3,
@@ -122,6 +124,7 @@ export const inbound = [
     date: "2026-03-30",
     estimatedValue: "3,000–5,000",
     category: "pet food",
+    lastContacted: { name: "@nomnomhq", date: "2026-03-30" },
   },
   {
     id: 4,
@@ -133,5 +136,6 @@ export const inbound = [
     date: "2026-03-29",
     estimatedValue: "2,500–4,500",
     category: "litter & waste",
+    lastContacted: { name: "Priya M. (Brand Partnerships)", date: "2026-03-29" },
   },
 ];

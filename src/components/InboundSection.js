@@ -29,6 +29,13 @@ function InboundCard({ item, onAction }) {
       <p className="inbound-subject">{item.subject}</p>
       <p className="inbound-preview">{item.preview}</p>
 
+      {item.lastContacted && (
+        <div className="last-contacted">
+          <span className="last-contacted-icon">💬</span>
+          <span>Last message from <strong>{item.lastContacted.name}</strong> on {item.lastContacted.date}</span>
+        </div>
+      )}
+
       {item.snoozed ? (
         <div className="inbound-snoozed-label">⏰ Followed up later</div>
       ) : (
