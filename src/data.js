@@ -1,0 +1,137 @@
+export const financials = {
+  totalEarned: 47250,
+  pendingInvoices: 12800,
+  totalExpenses: 8340,
+  annualGoal: 80000,
+};
+
+export const deals = [
+  {
+    id: 1,
+    brand: "Petlibro",
+    logo: "PL",
+    logoColor: "#4F7FFA",
+    value: 4500,
+    category: "automatic feeders",
+    stage: "in production",
+    paymentStatus: "invoiced",
+    deliverables: [
+      { type: "Instagram Reel", dueDate: "2026-04-10", done: false },
+      { type: "TikTok Video", dueDate: "2026-04-14", done: false },
+      { type: "Story Set (x3)", dueDate: "2026-04-10", done: true },
+    ],
+    usageRightsExpiry: "2026-10-01",
+    notes: "60-day exclusivity on automatic feeder category",
+  },
+  {
+    id: 2,
+    brand: "Litter Genie",
+    logo: "LG",
+    logoColor: "#8B5CF6",
+    value: 3200,
+    category: "litter & waste",
+    stage: "signed",
+    paymentStatus: "unpaid",
+    deliverables: [
+      { type: "YouTube Integration (60s)", dueDate: "2026-04-22", done: false },
+      { type: "Instagram Carousel", dueDate: "2026-04-25", done: false },
+    ],
+    usageRightsExpiry: "2026-07-15",
+    notes: "Brand approval required 5 days before posting",
+  },
+  {
+    id: 3,
+    brand: "Fresh Step",
+    logo: "FS",
+    logoColor: "#10B981",
+    value: 6000,
+    category: "litter & waste",
+    stage: "negotiating",
+    paymentStatus: "unpaid",
+    deliverables: [
+      { type: "TikTok Series (x3)", dueDate: "2026-05-01", done: false },
+      { type: "Instagram Reel", dueDate: "2026-05-05", done: false },
+    ],
+    usageRightsExpiry: "2026-12-31",
+    notes: "Counter-offered $6k, waiting on response",
+  },
+  {
+    id: 4,
+    brand: "Dodo",
+    logo: "DO",
+    logoColor: "#F59E0B",
+    value: 2800,
+    category: "pet accessories",
+    stage: "delivered",
+    paymentStatus: "invoiced",
+    deliverables: [
+      { type: "Instagram Reel", dueDate: "2026-03-28", done: true },
+      { type: "TikTok Video", dueDate: "2026-03-28", done: true },
+    ],
+    usageRightsExpiry: "2026-09-28",
+    notes: "All deliverables submitted. Invoice #1042 sent.",
+  },
+  {
+    id: 5,
+    brand: "PetSafe",
+    logo: "PS",
+    logoColor: "#EF4444",
+    value: 5500,
+    category: "pet health",
+    stage: "paid",
+    paymentStatus: "paid",
+    deliverables: [
+      { type: "YouTube Video", dueDate: "2026-03-01", done: true },
+      { type: "Instagram Reel", dueDate: "2026-03-01", done: true },
+    ],
+    usageRightsExpiry: "2026-09-01",
+    notes: "Payment received 2026-03-15",
+  },
+];
+
+export const inbound = [
+  {
+    id: 1,
+    brand: "Meowtel",
+    source: "Gmail",
+    subject: "Partnership Opportunity — Meowtel x Your Channel",
+    preview:
+      "Hi! We love your content and think your audience would be a perfect fit for Meowtel, the #1 cat sitting marketplace. We'd love to explore a paid partnership...",
+    date: "2026-04-01",
+    estimatedValue: "2,000–4,000",
+    category: "pet services",
+  },
+  {
+    id: 2,
+    brand: "Catit",
+    source: "Instagram DM",
+    subject: "Collab interest from Catit",
+    preview:
+      "Hey! We've been following your page for a while — your cats are adorable 😍 We'd love to send you our new Pixi fountain and discuss a paid collab...",
+    date: "2026-03-31",
+    estimatedValue: "1,500–3,000",
+    category: "water fountains",
+  },
+  {
+    id: 3,
+    brand: "NomNomNow",
+    source: "TikTok DM",
+    subject: "NomNomNow creator program",
+    preview:
+      "Hi creator! NomNomNow is launching a new creator program for Q2. We're offering flat-rate sponsorships for TikTok and Instagram. Would love to connect...",
+    date: "2026-03-30",
+    estimatedValue: "3,000–5,000",
+    category: "pet food",
+  },
+  {
+    id: 4,
+    brand: "Arm & Hammer Pet",
+    source: "Gmail",
+    subject: "Re: Creator collaboration — litter line",
+    preview:
+      "Following up on our previous email — we're looking to partner with cat creators for our new clumping litter launch. Budget is flexible for the right creator...",
+    date: "2026-03-29",
+    estimatedValue: "2,500–4,500",
+    category: "litter & waste",
+  },
+];
