@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { daysUntil, detectConflicts, formatCurrency } from "../utils";
+import { daysUntil, detectConflicts } from "../utils";
 import ConflictAlert from "../components/ConflictAlert";
 import BrandLogo from "../components/BrandLogo";
 
@@ -67,7 +67,7 @@ function DeliverableRow({ item }) {
   );
 }
 
-export default function TodayTab({ deals, opportunities, financials }) {
+export default function TodayTab({ deals, opportunities }) {
   const [selectedDay, setSelectedDay] = useState(0);
 
   const conflicts = detectConflicts(deals);
@@ -109,9 +109,6 @@ export default function TodayTab({ deals, opportunities, financials }) {
 
   const needsReply = opportunities.filter((o) => !o.snoozed && o.status === "new").slice(0, 3);
 
-  const netProfit = financials.totalEarned - financials.totalExpenses;
-  const goalPct = Math.min(Math.round((financials.totalEarned / financials.annualGoal) * 100), 100);
-
   return (
     <div className="tab-page today-page">
 
@@ -125,32 +122,6 @@ export default function TodayTab({ deals, opportunities, financials }) {
           {conflicts.map((c) => <ConflictAlert key={c.category} conflict={c} />)}
         </div>
       )}
-
-      <div className="today-stat-row">
-        <div className="today-stat-chip">
-          <span className="today-stat-label">Earned this year</span>
-          <span className="today-stat-value earned">{formatCurrency(financials.totalEarned)}</span>
-        </div>
-        <div className="today-stat-chip">
-          <span className="today-stat-label">Pending payment</span>
-          <span className="today-stat-value pending">{formatCurrency(financials.pendingInvoices)}</span>
-        </div>
-        <div className="today-stat-chip">
-          <span className="today-stat-label">Net profit</span>
-          <span className={`today-stat-value ${netProfit >= 0 ? "profit" : "loss"}`}>
-            {netProfit >= 0 ? "+" : ""}{formatCurrency(netProfit)}
-          </span>
-        </div>
-        <div className="today-stat-chip goal-chip">
-          <span className="today-stat-label">Annual goal</span>
-          <div className="today-goal-row">
-            <span className="today-stat-value">{goalPct}%</span>
-            <div className="today-goal-bar">
-              <div className="today-goal-fill" style={{ width: `${goalPct}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Interactive week calendar */}
       <div className="week-block">
