@@ -12,8 +12,6 @@ const TYPE_LABELS = {
   product_sent: { label: "Product en route",       cls: "type-product-sent" },
 };
 
-const GMAIL_SIMULATED = true;
-
 function GmailBanner({ connected }) {
   if (connected) return null;
   return (
