@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "./App.css";
 import {
   financials as initialFinancials,
@@ -50,8 +50,21 @@ export default function App() {
     setTargets((prev) => [...prev, newTarget]);
   };
 
-  const netProfit = financials.totalEarned - financials.totalExpenses;
   const goalPct = Math.min(Math.round((financials.totalEarned / financials.annualGoal) * 100), 100);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
+  const goalInputRef = useRef(null);
+
+  const startEditGoal = () => {
+    setGoalDraft(financials.annualGoal.toString());
+    setEditingGoal(true);
+    setTimeout(() => goalInputRef.current && goalInputRef.current.select(), 0);
+  };
+  const saveGoal = () => {
+    const val = parseFloat(goalDraft.replace(/,/g, ""));
+    if (!isNaN(val) && val > 0) setFinancials((f) => ({ ...f, annualGoal: val }));
+    setEditingGoal(false);
+  };
 
   const tabContent = {
     today: (
@@ -84,30 +97,32 @@ export default function App() {
       <main className="tab-content">
         <div className="sticky-fin-bar">
           <div className="sfb-item">
-            <span className="sfb-label">Earned</span>
+            <span className="sfb-label">Earned this year</span>
             <span className="sfb-value sfb-earned">{formatCurrency(financials.totalEarned)}</span>
           </div>
           <div className="sfb-sep" />
-          <div className="sfb-item">
-            <span className="sfb-label">Pending</span>
-            <span className="sfb-value sfb-pending">{formatCurrency(financials.pendingInvoices)}</span>
-          </div>
-          <div className="sfb-sep" />
           <div className="sfb-item sfb-goal-item">
-            <span className="sfb-label">Annual goal</span>
-            <div className="sfb-goal-row">
-              <div className="sfb-goal-track">
-                <div className="sfb-goal-fill" style={{ width: `${goalPct}%` }} />
-              </div>
-              <span className="sfb-value">{goalPct}%</span>
+            <div className="sfb-goal-label-row">
+              <span className="sfb-label">Annual goal</span>
+              <button className="sfb-edit-btn" onClick={startEditGoal} title="Edit goal">✎</button>
             </div>
-          </div>
-          <div className="sfb-sep" />
-          <div className="sfb-item">
-            <span className="sfb-label">Net profit</span>
-            <span className={`sfb-value ${netProfit >= 0 ? "sfb-profit" : "sfb-loss"}`}>
-              {netProfit >= 0 ? "+" : ""}{formatCurrency(netProfit)}
-            </span>
+            {editingGoal ? (
+              <input
+                ref={goalInputRef}
+                className="sfb-goal-input"
+                value={goalDraft}
+                onChange={(e) => setGoalDraft(e.target.value)}
+                onBlur={saveGoal}
+                onKeyDown={(e) => { if (e.key === "Enter") saveGoal(); if (e.key === "Escape") setEditingGoal(false); }}
+              />
+            ) : (
+              <div className="sfb-goal-row">
+                <div className="sfb-goal-track">
+                  <div className="sfb-goal-fill" style={{ width: `${goalPct}%` }} />
+                </div>
+                <span className="sfb-value">{goalPct}% · {formatCurrency(financials.annualGoal)}</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="tab-content-inner">
