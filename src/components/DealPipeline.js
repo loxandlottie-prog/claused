@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { daysUntil } from "../utils";
+import UsageRightsCountdown from "./UsageRightsCountdown";
 
 const STAGES = [
   "outreach",
@@ -11,42 +13,20 @@ const STAGES = [
 ];
 
 const STAGE_COLORS = {
-  outreach: "#94A3B8",
-  negotiating: "#F59E0B",
-  signed: "#3B82F6",
+  outreach:      "#94A3B8",
+  negotiating:   "#F59E0B",
+  signed:        "#3B82F6",
   "in production": "#8B5CF6",
-  delivered: "#06B6D4",
-  invoiced: "#F97316",
-  paid: "#10B981",
+  delivered:     "#06B6D4",
+  invoiced:      "#F97316",
+  paid:          "#10B981",
 };
 
 const PAYMENT_BADGE = {
-  unpaid: { label: "Unpaid", cls: "badge-unpaid" },
+  unpaid:   { label: "Unpaid",   cls: "badge-unpaid" },
   invoiced: { label: "Invoiced", cls: "badge-invoiced" },
-  paid: { label: "Paid", cls: "badge-paid" },
+  paid:     { label: "Paid",     cls: "badge-paid" },
 };
-
-function daysUntil(dateStr) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  return Math.round((target - today) / (1000 * 60 * 60 * 24));
-}
-
-function UsageRightsCountdown({ expiry }) {
-  const days = daysUntil(expiry);
-  const urgent = days <= 30;
-  const warning = days <= 90;
-  return (
-    <div className={`usage-rights ${urgent ? "urgent" : warning ? "warning" : ""}`}>
-      <span className="usage-icon">🔒</span>
-      <span className="usage-label">Usage rights</span>
-      <span className="usage-expiry">
-        {days <= 0 ? "Expired" : `${days}d left`} · {expiry}
-      </span>
-    </div>
-  );
-}
 
 function DeliverableRow({ item }) {
   const days = daysUntil(item.dueDate);
@@ -90,15 +70,9 @@ function DealCard({ deal, onStageChange }) {
           <div
             className="deal-stage-pill"
             style={{ background: stageColor + "22", color: stageColor, borderColor: stageColor + "44" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowStageMenu((s) => !s);
-            }}
+            onClick={(e) => { e.stopPropagation(); setShowStageMenu((s) => !s); }}
           >
-            <span
-              className="stage-dot"
-              style={{ background: stageColor }}
-            />
+            <span className="stage-dot" style={{ background: stageColor }} />
             {deal.stage}
             <span className="stage-edit-hint">▾</span>
           </div>
@@ -110,10 +84,7 @@ function DealCard({ deal, onStageChange }) {
                   key={s}
                   className={`stage-menu-item ${s === deal.stage ? "active" : ""}`}
                   style={{ color: STAGE_COLORS[s] }}
-                  onClick={() => {
-                    onStageChange(deal.id, s);
-                    setShowStageMenu(false);
-                  }}
+                  onClick={() => { onStageChange(deal.id, s); setShowStageMenu(false); }}
                 >
                   <span className="stage-dot" style={{ background: STAGE_COLORS[s] }} />
                   {s}
@@ -166,9 +137,7 @@ export default function DealPipeline({ deals, onStageChange }) {
 
       {paid.length > 0 && (
         <>
-          <div className="section-divider">
-            <span>Paid & Closed</span>
-          </div>
+          <div className="section-divider"><span>Paid & Closed</span></div>
           <div className="deals-list faded">
             {paid.map((deal) => (
               <DealCard key={deal.id} deal={deal} onStageChange={onStageChange} />

@@ -1,84 +1,81 @@
 import React, { useState } from "react";
 import "./App.css";
-import { financials as initialFinancials, deals as initialDeals, inbound as initialInbound } from "./data";
-import FinancialBar from "./components/FinancialBar";
-import DealPipeline from "./components/DealPipeline";
-import InboundSection from "./components/InboundSection";
-import ConflictAlert from "./components/ConflictAlert";
+import {
+  financials as initialFinancials,
+  deals as initialDeals,
+  opportunities as initialOpportunities,
+  pastDeals as initialPastDeals,
+  targets as initialTargets,
+} from "./data";
+import Sidebar from "./components/Sidebar";
+import TodayTab from "./tabs/TodayTab";
+import DealsTab from "./tabs/DealsTab";
+import MoneyTab from "./tabs/MoneyTab";
+import OpportunitiesTab from "./tabs/OpportunitiesTab";
+import PastDealsTab from "./tabs/PastDealsTab";
+import TargetsTab from "./tabs/TargetsTab";
 
-function App() {
+export default function App() {
+  const [activeTab, setActiveTab] = useState("today");
   const [financials, setFinancials] = useState(initialFinancials);
   const [deals, setDeals] = useState(initialDeals);
-  const [inbound, setInbound] = useState(initialInbound);
+  const [opportunities, setOpportunities] = useState(initialOpportunities);
+  const [pastDeals] = useState(initialPastDeals);
+  const [targets, setTargets] = useState(initialTargets);
 
-  const activeDeals = deals.filter((d) => d.stage !== "paid");
+  const handleStageChange = (id, newStage) => {
+    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: newStage } : d)));
+  };
 
-  const conflicts = [];
-  const categoryMap = {};
-  activeDeals.forEach((deal) => {
-    if (!categoryMap[deal.category]) categoryMap[deal.category] = [];
-    categoryMap[deal.category].push(deal);
-  });
-  Object.entries(categoryMap).forEach(([category, group]) => {
-    if (group.length > 1) conflicts.push({ category, deals: group });
-  });
-
-  const handleInboundAction = (id, action) => {
+  const handleOpportunityAction = (id, action) => {
     if (action === "pass") {
-      setInbound((prev) => prev.filter((i) => i.id !== id));
+      setOpportunities((prev) => prev.map((o) => (o.id === id ? { ...o, status: "passed" } : o)));
     } else if (action === "interested") {
-      setInbound((prev) => prev.filter((i) => i.id !== id));
+      setOpportunities((prev) => prev.map((o) => (o.id === id ? { ...o, status: "interested" } : o)));
     } else if (action === "followup") {
-      setInbound((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, snoozed: true } : i))
-      );
+      setOpportunities((prev) => prev.map((o) => (o.id === id ? { ...o, snoozed: true } : o)));
     }
   };
 
-  const handleStageChange = (id, newStage) => {
-    setDeals((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, stage: newStage } : d))
-    );
+  const handleTargetUpdate = (id, changes) => {
+    setTargets((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)));
+  };
+
+  const handleTargetAdd = (newTarget) => {
+    setTargets((prev) => [...prev, newTarget]);
+  };
+
+  const tabContent = {
+    today: (
+      <TodayTab deals={deals} opportunities={opportunities} financials={financials} />
+    ),
+    deals: (
+      <DealsTab deals={deals} onStageChange={handleStageChange} />
+    ),
+    money: (
+      <MoneyTab financials={financials} setFinancials={setFinancials} deals={deals} />
+    ),
+    opportunities: (
+      <OpportunitiesTab opportunities={opportunities} onAction={handleOpportunityAction} />
+    ),
+    "past-deals": (
+      <PastDealsTab pastDeals={pastDeals} />
+    ),
+    targets: (
+      <TargetsTab
+        targets={targets}
+        onTargetUpdate={handleTargetUpdate}
+        onTargetAdd={handleTargetAdd}
+      />
+    ),
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="header-inner">
-          <div className="logo">
-            <span className="logo-mark">C</span>
-            <span className="logo-text">laused</span>
-          </div>
-          <nav className="nav">
-            <button className="nav-item active">Dashboard</button>
-            <button className="nav-item">Deals</button>
-            <button className="nav-item">Invoices</button>
-            <button className="nav-item">Reports</button>
-          </nav>
-          <div className="header-right">
-            <div className="avatar">DW</div>
-          </div>
-        </div>
-      </header>
-
-      <main className="main">
-        <FinancialBar financials={financials} setFinancials={setFinancials} />
-
-        {conflicts.length > 0 && (
-          <div className="conflict-section">
-            {conflicts.map((c) => (
-              <ConflictAlert key={c.category} conflict={c} />
-            ))}
-          </div>
-        )}
-
-        <div className="content-grid">
-          <DealPipeline deals={deals} onStageChange={handleStageChange} />
-          <InboundSection inbound={inbound} onAction={handleInboundAction} />
-        </div>
+    <div className="app-layout">
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <main className="tab-content">
+        {tabContent[activeTab]}
       </main>
     </div>
   );
 }
-
-export default App;
