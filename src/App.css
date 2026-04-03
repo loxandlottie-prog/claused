@@ -450,6 +450,171 @@ textarea { resize: vertical; }
 }
 .conflict-dismiss:hover { color: var(--text); background: var(--surface2); }
 
+/* ─── Week Calendar Block ───────────────────────────────────── */
+.week-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.week-block-header {
+  padding: 20px 22px 0;
+}
+.week-block-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.week-count-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--accent-dim);
+  color: #A855F7;
+  border-radius: 99px;
+  padding: 2px 9px;
+  border: 1px solid rgba(192,132,252,0.2);
+}
+.week-count-badge.has-overdue {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: rgba(244,63,94,0.15);
+}
+
+/* 7-day strip */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface2);
+  transition: background 0.12s;
+}
+.week-day:last-child { border-right: none; }
+.week-day.is-today {
+  background: var(--accent-dim);
+}
+.week-day.has-items:not(.is-today) {
+  background: var(--surface);
+}
+.week-day-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+}
+.week-day.is-today .week-day-name { color: #A855F7; }
+.week-day-date {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+}
+.week-day.is-today .week-day-date { color: #A855F7; }
+.week-day-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.week-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.week-dot-empty {
+  width: 7px;
+  height: 7px;
+}
+
+/* Day groups (deliverable lists) */
+.day-group {
+  border-top: 1px solid var(--border);
+}
+.day-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 22px;
+  background: var(--surface2);
+}
+.day-group-header.today-header {
+  background: rgba(192,132,252,0.06);
+}
+.day-group-header.overdue-header {
+  background: var(--red-dim);
+}
+.day-group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+}
+.day-group-header.today-header .day-group-label { color: #A855F7; }
+.day-group-header.overdue-header .day-group-label { color: var(--red); }
+.day-group-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+}
+
+/* Deliverable rows inside day groups */
+.cal-del-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.cal-del-row:last-child { border-bottom: none; }
+.cal-del-row:hover { background: var(--surface2); }
+.cal-del-row.cal-overdue { background: rgba(244,63,94,0.02); }
+.cal-del-logo {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.cal-del-info { flex: 1; min-width: 0; }
+.cal-del-type { display: block; font-size: 13.5px; font-weight: 600; color: var(--text); }
+.cal-del-brand { display: block; font-size: 12px; color: var(--text3); margin-top: 1px; }
+.cal-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.week-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 22px;
+  font-size: 13.5px;
+  color: var(--text3);
+  font-weight: 500;
+  border-top: 1px solid var(--border);
+}
+
 /* ─── Today Tab ─────────────────────────────────────────────── */
 .today-page { gap: 18px; }
 .today-greeting { margin-bottom: 4px; }
