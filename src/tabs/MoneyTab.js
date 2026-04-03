@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { formatCurrency } from "../utils";
+import BrandLogo from "../components/BrandLogo";
 
 function EditableValue({ value, onSave, prefix = "$", className = "" }) {
   const [editing, setEditing] = useState(false);
@@ -158,9 +159,7 @@ export default function MoneyTab({ financials, setFinancials, deals }) {
                 <tr key={deal.id}>
                   <td>
                     <div className="money-table-brand">
-                      <div className="deal-logo" style={{ background: deal.logoColor, width: 28, height: 28, fontSize: 10 }}>
-                        {deal.logo}
-                      </div>
+                      <BrandLogo logo={deal.logo} logoColor={deal.logoColor} domain={deal.domain} size={28} />
                       {deal.brand}
                     </div>
                   </td>

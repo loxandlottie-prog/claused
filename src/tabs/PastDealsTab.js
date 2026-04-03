@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import UsageRightsCountdown from "../components/UsageRightsCountdown";
+import BrandLogo from "../components/BrandLogo";
 import { formatCurrency } from "../utils";
 
 const PAYMENT_METHOD_LABELS = {
@@ -16,9 +17,7 @@ function PastDealCard({ deal }) {
     <div className="deal-card" onClick={() => setExpanded((e) => !e)}>
       <div className="deal-card-header" style={{ cursor: "pointer" }}>
         <div className="deal-brand-row">
-          <div className="deal-logo" style={{ background: deal.logoColor }}>
-            {deal.logo}
-          </div>
+          <BrandLogo logo={deal.logo} logoColor={deal.logoColor} domain={deal.domain} size={36} />
           <div className="deal-brand-info">
             <span className="deal-brand-name">{deal.brand}</span>
             <span className="deal-category">{deal.category}</span>

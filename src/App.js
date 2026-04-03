@@ -27,6 +27,10 @@ export default function App() {
     setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: newStage } : d)));
   };
 
+  const handleDealAdd = (newDeal) => {
+    setDeals((prev) => [newDeal, ...prev]);
+  };
+
   const handleOpportunityAction = (id, action) => {
     if (action === "pass") {
       setOpportunities((prev) => prev.map((o) => (o.id === id ? { ...o, status: "passed" } : o)));
@@ -50,7 +54,7 @@ export default function App() {
       <TodayTab deals={deals} opportunities={opportunities} financials={financials} />
     ),
     deals: (
-      <DealsTab deals={deals} onStageChange={handleStageChange} />
+      <DealsTab deals={deals} onStageChange={handleStageChange} onDealAdd={handleDealAdd} />
     ),
     money: (
       <MoneyTab financials={financials} setFinancials={setFinancials} deals={deals} />

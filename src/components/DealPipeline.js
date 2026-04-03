@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { daysUntil } from "../utils";
 import UsageRightsCountdown from "./UsageRightsCountdown";
+import BrandLogo from "./BrandLogo";
 
 const STAGES = [
   "outreach",
@@ -52,9 +53,7 @@ function DealCard({ deal, onStageChange }) {
     <div className="deal-card" style={{ borderLeft: `3px solid ${stageColor}` }}>
       <div className="deal-card-header" onClick={() => setExpanded((e) => !e)}>
         <div className="deal-brand-row">
-          <div className="deal-logo" style={{ background: deal.logoColor }}>
-            {deal.logo}
-          </div>
+          <BrandLogo logo={deal.logo} logoColor={deal.logoColor} domain={deal.domain} size={36} />
           <div className="deal-brand-info">
             <span className="deal-brand-name">{deal.brand}</span>
             <span className="deal-category">{deal.category}</span>

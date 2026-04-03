@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BrandLogo from "../components/BrandLogo";
 
 const PRIORITY_CONFIG = {
   high:   { label: "High",   cls: "priority-high" },
@@ -30,6 +31,7 @@ function TargetCard({ target, onUpdate }) {
   const status = STATUS_CONFIG[target.status] || { label: target.status, color: "#A09890" };
   const logo = target.logo || autoLogo(target.brand);
   const logoColor = target.logoColor || autoColor(target.brand, LOGO_PALETTE);
+  const domain = target.domain || null;
 
   const statusOrder = ["not contacted", "contacted", "in talks", "passed"];
   const nextStatus = statusOrder[statusOrder.indexOf(target.status) + 1];
@@ -38,9 +40,7 @@ function TargetCard({ target, onUpdate }) {
     <div className="deal-card target-card">
       <div className="deal-card-header" onClick={() => setExpanded((e) => !e)} style={{ cursor: "pointer" }}>
         <div className="deal-brand-row">
-          <div className="deal-logo" style={{ background: logoColor }}>
-            {logo}
-          </div>
+          <BrandLogo logo={logo} logoColor={logoColor} domain={domain} size={36} />
           <div className="deal-brand-info">
             <span className="deal-brand-name">{target.brand}</span>
             <span className="deal-category">{target.category}</span>

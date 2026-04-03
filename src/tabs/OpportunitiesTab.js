@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BrandLogo from "../components/BrandLogo";
 
 const SOURCE_CONFIG = {
   Gmail:          { icon: "✉", cls: "source-gmail", label: "Gmail" },
@@ -41,9 +42,7 @@ function OpportunityCard({ item, onAction }) {
       )}
       <div className="opp-card-top">
         <div className="opp-brand-row">
-          <div className="deal-logo" style={{ background: item.logoColor, width: 36, height: 36, fontSize: 11 }}>
-            {item.logo}
-          </div>
+          <BrandLogo logo={item.logo} logoColor={item.logoColor} domain={item.domain} size={36} />
           <div>
             <span className="opp-brand">{item.brand}</span>
             <div className="opp-badges">
