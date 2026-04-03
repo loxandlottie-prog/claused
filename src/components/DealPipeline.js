@@ -29,6 +29,12 @@ const PAYMENT_BADGE = {
   paid:     { label: "Paid",     cls: "badge-paid" },
 };
 
+const PHASE_COLORS = {
+  done:     "#10B981",
+  active:   "#8B5CF6",
+  upcoming: "#CBD5E1",
+};
+
 function DeliverableRow({ item }) {
   const days = daysUntil(item.dueDate);
   const overdue = days < 0 && !item.done;
@@ -43,9 +49,43 @@ function DeliverableRow({ item }) {
   );
 }
 
+function PhaseTimeline({ phases }) {
+  return (
+    <div className="phase-timeline-section">
+      <span className="section-label">Phases</span>
+      <div className="phase-steps">
+        {phases.map((phase, i) => {
+          const color = PHASE_COLORS[phase.status] || PHASE_COLORS.upcoming;
+          const isLast = i === phases.length - 1;
+          return (
+            <div key={i} className={`phase-step phase-${phase.status}`}>
+              <div className="phase-track">
+                <div className="phase-dot" style={{ background: color, borderColor: color }} />
+                {!isLast && (
+                  <div
+                    className="phase-connector"
+                    style={{ background: phase.status === "done" ? color : "#E2E8F0" }}
+                  />
+                )}
+              </div>
+              <div className="phase-info">
+                <span className="phase-name">{phase.name}</span>
+                {phase.dueDate && (
+                  <span className="phase-date">{phase.dueDate}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function DealCard({ deal, onStageChange }) {
   const [expanded, setExpanded] = useState(false);
   const [showStageMenu, setShowStageMenu] = useState(false);
+  const [violationFlagged, setViolationFlagged] = useState(deal.usageViolationFlagged || false);
   const stageColor = STAGE_COLORS[deal.stage];
   const payment = PAYMENT_BADGE[deal.paymentStatus];
 
@@ -96,14 +136,24 @@ function DealCard({ deal, onStageChange }) {
 
       {expanded && (
         <div className="deal-card-body">
-          <div className="deliverables-section">
-            <span className="section-label">Deliverables</span>
-            {deal.deliverables.map((d, i) => (
-              <DeliverableRow key={i} item={d} />
-            ))}
-          </div>
+          {deal.phases && deal.phases.length > 0 ? (
+            <PhaseTimeline phases={deal.phases} />
+          ) : (
+            <div className="deliverables-section">
+              <span className="section-label">Deliverables</span>
+              {deal.deliverables.map((d, i) => (
+                <DeliverableRow key={i} item={d} />
+              ))}
+            </div>
+          )}
 
-          <UsageRightsCountdown expiry={deal.usageRightsExpiry} />
+          {deal.usageRightsExpiry && (
+            <UsageRightsCountdown
+              expiry={deal.usageRightsExpiry}
+              flagged={violationFlagged}
+              onFlagViolation={() => setViolationFlagged(true)}
+            />
+          )}
 
           {deal.notes && (
             <div className="deal-notes">

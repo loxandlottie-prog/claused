@@ -7,6 +7,7 @@ import {
   pastDeals as initialPastDeals,
   targets as initialTargets,
 } from "./data";
+import { formatCurrency } from "./utils";
 import Sidebar from "./components/Sidebar";
 import TodayTab from "./tabs/TodayTab";
 import DealsTab from "./tabs/DealsTab";
@@ -49,6 +50,9 @@ export default function App() {
     setTargets((prev) => [...prev, newTarget]);
   };
 
+  const netProfit = financials.totalEarned - financials.totalExpenses;
+  const goalPct = Math.min(Math.round((financials.totalEarned / financials.annualGoal) * 100), 100);
+
   const tabContent = {
     today: (
       <TodayTab deals={deals} opportunities={opportunities} financials={financials} />
@@ -78,7 +82,37 @@ export default function App() {
     <div className="app-layout">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="tab-content">
-        {tabContent[activeTab]}
+        <div className="sticky-fin-bar">
+          <div className="sfb-item">
+            <span className="sfb-label">Earned</span>
+            <span className="sfb-value sfb-earned">{formatCurrency(financials.totalEarned)}</span>
+          </div>
+          <div className="sfb-sep" />
+          <div className="sfb-item">
+            <span className="sfb-label">Pending</span>
+            <span className="sfb-value sfb-pending">{formatCurrency(financials.pendingInvoices)}</span>
+          </div>
+          <div className="sfb-sep" />
+          <div className="sfb-item sfb-goal-item">
+            <span className="sfb-label">Annual goal</span>
+            <div className="sfb-goal-row">
+              <div className="sfb-goal-track">
+                <div className="sfb-goal-fill" style={{ width: `${goalPct}%` }} />
+              </div>
+              <span className="sfb-value">{goalPct}%</span>
+            </div>
+          </div>
+          <div className="sfb-sep" />
+          <div className="sfb-item">
+            <span className="sfb-label">Net profit</span>
+            <span className={`sfb-value ${netProfit >= 0 ? "sfb-profit" : "sfb-loss"}`}>
+              {netProfit >= 0 ? "+" : ""}{formatCurrency(netProfit)}
+            </span>
+          </div>
+        </div>
+        <div className="tab-content-inner">
+          {tabContent[activeTab]}
+        </div>
       </main>
     </div>
   );

@@ -162,8 +162,13 @@ textarea { resize: vertical; }
 .tab-content {
   flex: 1;
   min-width: 0;
-  padding: 36px 40px 80px;
   max-width: 900px;
+  display: flex;
+  flex-direction: column;
+}
+.tab-content-inner {
+  flex: 1;
+  padding: 24px 40px 80px;
 }
 
 /* ─── Tab Page Wrapper ──────────────────────────────────────── */
@@ -382,8 +387,31 @@ textarea { resize: vertical; }
 }
 .usage-rights.warning { color: #D97706; border-color: #FDE68A; background: #FFFBEB; }
 .usage-rights.urgent { color: var(--red); border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.04); }
-.usage-label { flex: 1; }
-.usage-expiry { font-weight: 700; }
+.usage-rights.expired { color: var(--red); border-color: rgba(244,63,94,0.3); background: rgba(244,63,94,0.06); font-weight: 600; }
+.usage-info { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.usage-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; opacity: 0.7; }
+.usage-expiry { font-weight: 600; font-size: 12px; }
+.usage-violation-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  background: var(--red-dim);
+  border-radius: 99px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+.usage-flag-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--red);
+  border: 1px solid rgba(244,63,94,0.3);
+  border-radius: 99px;
+  padding: 3px 10px;
+  background: var(--red-dim);
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.usage-flag-btn:hover { background: rgba(244,63,94,0.15); }
 
 .deal-notes {
   display: flex;
@@ -1309,9 +1337,373 @@ textarea { resize: vertical; }
   .sidebar-nav { flex-direction: row; flex: 1; gap: 2px; overflow-x: auto; }
   .sidebar-nav-item { white-space: nowrap; }
   .sidebar-user { display: none; }
-  .tab-content { padding: 20px 16px 60px; }
+  .tab-content-inner { padding: 20px 16px 60px; }
   .today-stat-row { grid-template-columns: 1fr 1fr; }
   .money-stats { grid-template-columns: 1fr 1fr; }
   .money-grid { grid-template-columns: 1fr; }
   .add-target-form { grid-template-columns: 1fr; }
+  .sticky-fin-bar { padding: 10px 16px; gap: 12px; }
+  .sfb-goal-item { display: none; }
 }
+
+/* ─── Sticky Financial Bar ──────────────────────────────────── */
+.sticky-fin-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 40px;
+}
+.sfb-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 20px 0 0;
+}
+.sfb-sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  margin: 0 20px 0 0;
+  flex-shrink: 0;
+}
+.sfb-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text3);
+}
+.sfb-value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.sfb-earned { color: #16A34A; }
+.sfb-pending { color: #D97706; }
+.sfb-profit { color: #16A34A; }
+.sfb-loss { color: var(--red); }
+.sfb-goal-item { padding-right: 0; flex: 1; max-width: 200px; }
+.sfb-goal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sfb-goal-track {
+  flex: 1;
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.sfb-goal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C084FC, #E879F9);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* ─── Conflict Alert (enhanced) ─────────────────────────────── */
+.conflict-overlap-range {
+  font-size: 12px;
+  color: #D97706;
+  font-weight: 600;
+}
+.conflict-terms {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.conflict-term-row {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.conflict-term-brand {
+  font-weight: 700;
+  margin-right: 5px;
+  color: var(--text);
+}
+.conflict-term-text {
+  color: #B45309;
+  font-style: italic;
+}
+
+/* ─── Phase Timeline ─────────────────────────────────────────── */
+.phase-timeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.phase-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.phase-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.phase-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 14px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.phase-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+  background: white;
+}
+.phase-step.phase-done .phase-dot { background: #10B981; border-color: #10B981; }
+.phase-step.phase-active .phase-dot {
+  background: white;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.2);
+}
+.phase-step.phase-upcoming .phase-dot { background: white; border-color: #CBD5E1; }
+.phase-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  margin: 3px 0;
+}
+.phase-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 16px;
+  flex: 1;
+}
+.phase-step:last-child .phase-info { padding-bottom: 0; }
+.phase-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.phase-step.phase-done .phase-name { color: var(--text3); text-decoration: line-through; font-weight: 500; }
+.phase-step.phase-active .phase-name { color: #7C3AED; }
+.phase-date {
+  font-size: 11.5px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+/* ─── Tab Header Actions ─────────────────────────────────────── */
+.tab-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tab-action-btn-ghost {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 99px;
+  padding: 7px 16px;
+  transition: all 0.15s;
+}
+.tab-action-btn-ghost:hover { background: var(--border); color: var(--text); }
+
+/* ─── Email Parser ───────────────────────────────────────────── */
+.email-parser-card {
+  background: var(--surface);
+  border: 1.5px solid rgba(192,132,252,0.2);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.email-parser-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.email-parser-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.email-parser-hint {
+  font-size: 12px;
+  color: var(--text3);
+}
+.email-parser-textarea {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text2);
+  border-color: var(--border2);
+  border-radius: var(--radius-sm);
+}
+.email-parser-error {
+  font-size: 12.5px;
+  color: var(--red);
+  font-weight: 500;
+}
+.email-parser-parse-btn {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 600;
+  color: #A855F7;
+  background: var(--accent-dim);
+  border: 1.5px solid rgba(192,132,252,0.3);
+  border-radius: 99px;
+  padding: 7px 20px;
+  transition: all 0.15s;
+}
+.email-parser-parse-btn:hover { background: rgba(192,132,252,0.18); }
+.email-parse-preview {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.parse-preview-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text3);
+}
+.parse-preview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.parse-preview-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.parse-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text3);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.parse-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.email-parser-use-btn {
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #C084FC, #E879F9);
+  border-radius: 99px;
+  padding: 7px 18px;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(192,132,252,0.3);
+}
+.email-parser-use-btn:hover { opacity: 0.88; }
+
+/* ─── CSV Import ─────────────────────────────────────────────── */
+.csv-import-textarea {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text2);
+  font-family: "SF Mono", "Fira Code", monospace;
+  border-color: var(--border2);
+}
+.csv-import-error {
+  font-size: 12.5px;
+  color: var(--red);
+  font-weight: 500;
+}
+.csv-import-parse-btn {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 99px;
+  padding: 7px 20px;
+  margin-top: 4px;
+  transition: all 0.15s;
+}
+.csv-import-parse-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
+.csv-import-parse-btn:disabled { opacity: 0.4; cursor: default; }
+.csv-import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.csv-import-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.csv-import-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.csv-import-table tfoot td {
+  border-top: 2px solid var(--border2);
+  border-bottom: none;
+  padding-top: 12px;
+  font-weight: 700;
+}
+.deductibility-select {
+  font-size: 11.5px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  width: auto;
+}
+.csv-import-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+}
+.csv-import-confirm-btn {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #10B981, #059669);
+  border-radius: 99px;
+  padding: 8px 20px;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+.csv-import-confirm-btn:hover { opacity: 0.88; }
+.csv-import-cancel-btn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  padding: 8px 14px;
+  border-radius: 99px;
+  transition: all 0.12s;
+}
+.csv-import-cancel-btn:hover { color: var(--text); background: var(--surface2); }
