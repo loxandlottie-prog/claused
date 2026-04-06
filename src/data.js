@@ -95,7 +95,7 @@ export const threads = [
     lastMessage: "2026-04-02",
     offer: "Product seeding + affiliate program",
     product: "Chewy Affiliate + Free Product Haul",
-    theirRate: null,
+    theirRate: "product",
     yourRate: 1000,
     status: "reply_needed",
     revenue: null,

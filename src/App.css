@@ -387,6 +387,7 @@ textarea { resize: vertical; }
   border-radius: 99px;
 }
 .rate-their { background: var(--bg); border: 1px solid var(--border); color: var(--text2); }
+.rate-product { background: #FFF7ED; border: 1px solid #FED7AA; color: #C2410C; }
 .rate-yours { background: var(--purple-light); border: 1px solid var(--purple-mid); color: var(--purple); }
 .rate-closed { background: var(--green-dim); border: 1px solid #A7F3D0; color: #065F46; }
 

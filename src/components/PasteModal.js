@@ -49,7 +49,7 @@ export default function PasteModal({ onAdd, onClose }) {
       firstReached: today,
       lastMessage: today,
       offer: form.offer.trim(),
-      theirRate: parseFloat(form.theirRate) || null,
+      theirRate: form.theirRate.trim().toLowerCase() === "product" ? "product" : parseFloat(form.theirRate) || null,
       yourRate: parseFloat(form.yourRate) || null,
       product: form.product.trim() || null,
       status: "reply_needed",
@@ -114,8 +114,8 @@ export default function PasteModal({ onAdd, onClose }) {
               </div>
               <div className="modal-field-row">
                 <div className="modal-field">
-                  <label>Their rate ($)</label>
-                  <input value={form.theirRate} onChange={set("theirRate")} type="number" min="0" placeholder="e.g. 1500" />
+                  <label>Their rate ($) — or type "product"</label>
+                  <input value={form.theirRate} onChange={set("theirRate")} placeholder="e.g. 1500 or product" />
                 </div>
                 <div className="modal-field">
                   <label>Your rate ($)</label>

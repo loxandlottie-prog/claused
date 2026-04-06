@@ -134,9 +134,11 @@ export default function BrandCard({ thread, onStatusChange }) {
 
           <div className="brand-meta-row">
             <div className="brand-rates">
-              {thread.theirRate && (
+              {thread.theirRate === "product" ? (
+                <span className="rate-chip rate-product">Product only</span>
+              ) : thread.theirRate ? (
                 <span className="rate-chip rate-their">Their rate: {formatCurrency(thread.theirRate)}</span>
-              )}
+              ) : null}
               {thread.yourRate && (
                 <span className="rate-chip rate-yours">Your rate: {formatCurrency(thread.yourRate)}</span>
               )}
