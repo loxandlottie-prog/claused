@@ -90,6 +90,17 @@ export default function BrandCard({ thread, onStatusChange }) {
             </div>
             <div className="brand-top-right">
               <span className={`status-badge ${s.cls}`}>{s.label}</span>
+              {next && (
+                <button
+                  className="brand-advance-btn"
+                  onClick={() => onStatusChange(thread.id, next)}
+                  title={`Mark as: ${STATUS[next].label}`}
+                >
+                  {next === "you_replied" && "Replied ✓"}
+                  {next === "waiting_on_them" && "Sent ✓"}
+                  {next === "deal_closed" && "Close deal"}
+                </button>
+              )}
               <a
                 href={gmailUrl}
                 target="_blank"
@@ -143,17 +154,6 @@ export default function BrandCard({ thread, onStatusChange }) {
           </div>
         </div>
 
-        {next && (
-          <button
-            className="brand-advance-btn"
-            onClick={() => onStatusChange(thread.id, next)}
-            title={`Mark as: ${STATUS[next].label}`}
-          >
-            {next === "you_replied" && "Replied ✓"}
-            {next === "waiting_on_them" && "Sent ✓"}
-            {next === "deal_closed" && "Close deal"}
-          </button>
-        )}
       </div>
     </div>
   );
