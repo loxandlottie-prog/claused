@@ -20,6 +20,7 @@ export default function PasteModal({ onAdd, onClose }) {
       brand: result.brand || "",
       contactName: result.contactName || "",
       contactEmail: result.contactEmail || "",
+      product: "",
       offer: result.offer || "",
       theirRate: result.theirRate ? String(result.theirRate) : "",
       yourRate: "",
@@ -50,6 +51,7 @@ export default function PasteModal({ onAdd, onClose }) {
       offer: form.offer.trim(),
       theirRate: parseFloat(form.theirRate) || null,
       yourRate: parseFloat(form.yourRate) || null,
+      product: form.product.trim() || null,
       status: "reply_needed",
       revenue: null,
       category: "",
@@ -101,6 +103,10 @@ export default function PasteModal({ onAdd, onClose }) {
               <div className="modal-field">
                 <label>Contact email</label>
                 <input value={form.contactEmail} onChange={set("contactEmail")} placeholder="e.g. sarah@brand.com" />
+              </div>
+              <div className="modal-field">
+                <label>Product they're pitching</label>
+                <input value={form.product} onChange={set("product")} placeholder="e.g. Litter Genie Plus Disposal System" />
               </div>
               <div className="modal-field">
                 <label>What they offered</label>

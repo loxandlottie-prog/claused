@@ -44,6 +44,16 @@ function BrandLogo({ domain, logo, logoColor }) {
   );
 }
 
+function getGmailUrl(thread) {
+  if (thread.source === "gmail" && thread.id) {
+    return `https://mail.google.com/mail/u/0/#all/${thread.id}`;
+  }
+  if (thread.contact?.email) {
+    return `https://mail.google.com/mail/u/0/#search/from%3A${encodeURIComponent(thread.contact.email)}`;
+  }
+  return `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(thread.brand)}`;
+}
+
 export default function BrandCard({ thread, onStatusChange }) {
   const since = daysSince(thread.lastMessage);
   const followUp = since >= 14 && thread.status !== "deal_closed";
@@ -51,6 +61,7 @@ export default function BrandCard({ thread, onStatusChange }) {
   const next = NEXT_STATUS[thread.status];
 
   const websiteUrl = thread.domain ? `https://www.${thread.domain}` : null;
+  const gmailUrl = getGmailUrl(thread);
 
   return (
     <div className={`brand-card ${followUp ? "brand-card-followup" : ""}`}>
@@ -77,7 +88,22 @@ export default function BrandCard({ thread, onStatusChange }) {
                 </a>
               )}
             </div>
-            <span className={`status-badge ${s.cls}`}>{s.label}</span>
+            <div className="brand-top-right">
+              <span className={`status-badge ${s.cls}`}>{s.label}</span>
+              <a
+                href={gmailUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gmail-open-btn"
+                title="Open in Gmail"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 11L4 6H20ZM20 18H4V8L12 13L20 8V18Z" fill="currentColor"/>
+                </svg>
+                Open in Gmail
+              </a>
+            </div>
           </div>
 
           <div className="brand-contact">
@@ -85,6 +111,13 @@ export default function BrandCard({ thread, onStatusChange }) {
             {thread.contact.name && thread.contact.email && <span className="contact-sep">·</span>}
             {thread.contact.email && <span className="contact-email">{thread.contact.email}</span>}
           </div>
+
+          {thread.product && (
+            <div className="brand-product">
+              <span className="brand-product-label">Product</span>
+              <span className="brand-product-name">{thread.product}</span>
+            </div>
+          )}
 
           <div className="brand-offer">{thread.offer || <span className="muted">No offer details</span>}</div>
 
