@@ -208,6 +208,13 @@ textarea { resize: vertical; }
   color: var(--purple);
   font-weight: 600;
 }
+.filter-bar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
 .filter-count-badge {
   font-size: 10.5px;
   font-weight: 700;
