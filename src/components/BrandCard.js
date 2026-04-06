@@ -15,16 +15,23 @@ const NEXT_STATUS = {
   deal_closed:     null,
 };
 
-function BrandLogo({ domain, logo, logoColor }) {
-  const [imgFailed, setImgFailed] = useState(false);
+const LOGO_SOURCES = (domain) => [
+  `https://logo.clearbit.com/${domain}`,
+  `https://icon.horse/icon/${domain}`,
+];
 
-  if (domain && !imgFailed) {
+function BrandLogo({ domain, logo, logoColor }) {
+  const [srcIdx, setSrcIdx] = useState(0);
+  const sources = domain ? LOGO_SOURCES(domain) : [];
+  const allFailed = srcIdx >= sources.length;
+
+  if (sources.length > 0 && !allFailed) {
     return (
       <div className="brand-logo brand-logo-img">
         <img
-          src={`https://logo.clearbit.com/${domain}`}
+          src={sources[srcIdx]}
           alt=""
-          onError={() => setImgFailed(true)}
+          onError={() => setSrcIdx((i) => i + 1)}
         />
       </div>
     );
