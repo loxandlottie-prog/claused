@@ -37,28 +37,20 @@ function getHeader(msg, name) {
 }
 
 function parseFrom(raw) {
-  // "Display Name <email@domain.com>" or just "email@domain.com"
   const angleMatch = raw.match(/^(.*?)\s*<([^>]+)>/);
   if (angleMatch) {
-    return {
-      name: angleMatch[1].replace(/"/g, "").trim(),
-      email: angleMatch[2].trim(),
-    };
+    return { name: angleMatch[1].replace(/"/g, "").trim(), email: angleMatch[2].trim() };
   }
   const emailMatch = raw.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
   return { name: "", email: emailMatch ? emailMatch[0] : raw };
 }
 
 function toBrandName(contact, domain) {
-  // Try to get brand from display name first (more reliable than domain)
-  // e.g. "Sarah Chen at PetLibro" or "PetLibro Partnerships"
   const name = contact.name;
   const brandFromName =
     name.match(/\bat\s+([A-Z][A-Za-z0-9& .]+)/)?.[1] ||
     name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
   if (brandFromName) return brandFromName.trim();
-
-  // Fall back to domain-based brand
   const host = domain.replace(/^(mail\.|em\.|email\.|mg\.|send\.|news\.)/, "");
   const parts = host.split(".");
   const raw = parts.length > 2 ? parts[parts.length - 2] : parts[0];
@@ -66,12 +58,17 @@ function toBrandName(contact, domain) {
 }
 
 function toISODate(raw) {
-  try {
-    return new Date(raw).toISOString().slice(0, 10);
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
+  try { return new Date(raw).toISOString().slice(0, 10); }
+  catch { return new Date().toISOString().slice(0, 10); }
 }
+
+const CLOSED_KEYWORDS = [
+  "invoice", "invoiced", "payment received", "payment sent", "paid",
+  "signed contract", "contract signed", "deal confirmed", "confirmed",
+  "looking forward to working", "excited to work together",
+  "partnership confirmed", "content approved", "post approved",
+  "w9", "w-9", "tax form", "wire transfer", "ach payment",
+];
 
 const SKIP_DOMAINS = new Set([
   "gmail.com", "googlemail.com", "noreply.github.com",
@@ -86,6 +83,30 @@ const BRAND_QUERY = [
   '"content creator"', '"influencer"',
 ].join(" OR ");
 
+function inferStatus(msgs, userEmail) {
+  const first = msgs[0];
+  const last = msgs[msgs.length - 1];
+  const subject = getHeader(first, "Subject").toLowerCase();
+  const snippet = (last.snippet || "").toLowerCase();
+  const allText = subject + " " + snippet;
+
+  // Closed if strong deal-completion signals
+  if (CLOSED_KEYWORDS.some((kw) => allText.includes(kw))) return "deal_closed";
+
+  // Determine who sent the last message
+  if (userEmail) {
+    const lastFrom = parseFrom(getHeader(last, "From"));
+    const weSentLast = lastFrom.email.toLowerCase() === userEmail.toLowerCase();
+    if (weSentLast) return "waiting_on_them";
+  }
+
+  // If there are multiple messages, we've at least replied at some point
+  if (msgs.length > 2) return "waiting_on_them";
+  if (msgs.length === 2) return "you_replied";
+
+  return "reply_needed";
+}
+
 export default async function handler(req, res) {
   const cookies = parseCookies(req);
   let accessToken = cookies.gmail_access;
@@ -99,7 +120,6 @@ export default async function handler(req, res) {
     fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
 
   const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/threads?q=${encodeURIComponent(BRAND_QUERY)}&maxResults=40`;
-
   let listRes = await gmailFetch(listUrl);
 
   if (listRes.status === 401 && refreshToken) {
@@ -108,19 +128,23 @@ export default async function handler(req, res) {
     listRes = await gmailFetch(listUrl);
   }
 
-  if (!listRes.ok) {
-    return res.status(listRes.status).json({ error: "gmail_fetch_failed" });
-  }
+  if (!listRes.ok) return res.status(listRes.status).json({ error: "gmail_fetch_failed" });
 
   const { threads = [] } = await listRes.json();
   if (threads.length === 0) return res.json([]);
 
-  // Fetch each thread (metadata only — fast)
+  // Get connected user's email for status inference
+  const userInfoRes = await gmailFetch("https://www.googleapis.com/oauth2/v2/userinfo");
+  const userInfo = userInfoRes.ok ? await userInfoRes.json() : {};
+  const userEmail = userInfo.email || null;
+
+  // Fetch each thread — include snippet by omitting format=metadata
+  // Use fields param to keep payload small (no base64 body)
+  const fields = "messages(id,snippet,payload(headers))";
   const details = await Promise.all(
     threads.slice(0, 30).map(({ id }) =>
       gmailFetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}` +
-        `?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`
+        `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?fields=${encodeURIComponent(fields)}`
       )
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null)
@@ -147,7 +171,6 @@ export default async function handler(req, res) {
       const contact = parseFrom(fromRaw);
       const domain = contact.email.split("@")[1] || "";
 
-      // Skip automated / internal senders
       if (SKIP_DOMAINS.has(domain)) return null;
       const localPart = contact.email.split("@")[0];
       if (SKIP_LOCAL.test(localPart)) return null;
@@ -156,6 +179,7 @@ export default async function handler(req, res) {
       const brand = toBrandName(contact, domain);
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
+      const status = inferStatus(msgs, userEmail);
 
       return {
         id: thread.id,
@@ -169,7 +193,7 @@ export default async function handler(req, res) {
         offer: subject,
         theirRate: null,
         yourRate: null,
-        status: "reply_needed",
+        status,
         revenue: null,
         category: "",
         messageCount: msgs.length,
