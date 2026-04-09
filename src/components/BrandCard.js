@@ -44,24 +44,25 @@ function BrandLogo({ domain, logo, logoColor }) {
   );
 }
 
-function getGmailUrl(thread) {
+function getGmailUrl(thread, gmailEmail) {
+  const account = gmailEmail || "0";
   if (thread.source === "gmail" && thread.id) {
-    return `https://mail.google.com/mail/u/0/#all/${thread.id}`;
+    return `https://mail.google.com/mail/u/${account}/#all/${thread.id}`;
   }
   if (thread.contact?.email) {
-    return `https://mail.google.com/mail/u/0/#search/from%3A${encodeURIComponent(thread.contact.email)}`;
+    return `https://mail.google.com/mail/u/${account}/#search/from%3A${encodeURIComponent(thread.contact.email)}`;
   }
-  return `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(thread.brand)}`;
+  return `https://mail.google.com/mail/u/${account}/#search/${encodeURIComponent(thread.brand)}`;
 }
 
-export default function BrandCard({ thread, onStatusChange }) {
+export default function BrandCard({ thread, onStatusChange, gmailEmail }) {
   const since = daysSince(thread.lastMessage);
   const followUp = since >= 14 && thread.status !== "deal_closed";
   const s = STATUS[thread.status];
   const next = NEXT_STATUS[thread.status];
 
   const websiteUrl = thread.domain ? `https://www.${thread.domain}` : null;
-  const gmailUrl = getGmailUrl(thread);
+  const gmailUrl = getGmailUrl(thread, gmailEmail);
 
   return (
     <div className={`brand-card ${followUp ? "brand-card-followup" : ""}`}>

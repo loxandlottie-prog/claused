@@ -8,7 +8,7 @@ const FILTERS = [
   { key: "deal_closed",     label: "Closed" },
 ];
 
-export default function HomeTab({ threads, onStatusChange }) {
+export default function HomeTab({ threads, onStatusChange, gmailEmail }) {
   const [filter, setFilter] = useState("all");
   const [year, setYear] = useState("all");
 
@@ -89,7 +89,7 @@ export default function HomeTab({ threads, onStatusChange }) {
           <div className="empty-state">No brands match this filter.</div>
         ) : (
           visible.map((t) => (
-            <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange} />
+            <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange} gmailEmail={gmailEmail} />
           ))
         )}
       </div>

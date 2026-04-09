@@ -139,6 +139,7 @@ export default function App() {
             onStatusChange={handleStatusChange}
             onThreadAdd={handleThreadAdd}
             gmailConnected={gmail.connected}
+            gmailEmail={gmail.email}
           />
         ) : (
           <AnalyticsTab />
