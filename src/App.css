@@ -345,6 +345,43 @@ textarea { resize: vertical; }
   border-color: var(--purple-mid);
   background: var(--purple-light);
 }
+.close-deal-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #065F46;
+  background: var(--green-dim);
+  border: 1px solid #A7F3D0;
+  border-radius: var(--radius-xs);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.close-deal-btn:hover {
+  background: #A7F3D0;
+  border-color: #6EE7B7;
+}
+
+/* Closed deals divider */
+.closed-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  color: var(--text3);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.closed-divider::before,
+.closed-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.closed-divider::before { flex: 0 0 0px; }
 .brand-product {
   display: flex;
   align-items: center;

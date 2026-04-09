@@ -24,11 +24,15 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
   const waitingCount = yearFiltered.filter((t) => t.status === "waiting_on_them" || t.status === "you_replied").length;
   const closedCount  = yearFiltered.filter((t) => t.status === "deal_closed").length;
 
-  const visible = yearFiltered.filter((t) => {
+  const filtered = yearFiltered.filter((t) => {
     if (filter === "all") return true;
     if (filter === "waiting_on_them") return t.status === "waiting_on_them" || t.status === "you_replied";
     return t.status === filter;
   });
+
+  // Open deals first, closed at bottom
+  const openDeals  = filtered.filter((t) => t.status !== "deal_closed");
+  const closedDeals = filtered.filter((t) => t.status === "deal_closed");
 
   return (
     <div className="home-page">
@@ -85,19 +89,40 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
       </div>
 
       <div className="thread-list">
-        {visible.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="empty-state">No brands match this filter.</div>
         ) : (
-          visible.map((t) => (
-            <BrandCard
-              key={t.id}
-              thread={t}
-              onStatusChange={onStatusChange}
-              onDeliverableToggle={onDeliverableToggle}
-              onDeliverableAdd={onDeliverableAdd}
-              gmailEmail={gmailEmail}
-            />
-          ))
+          <>
+            {openDeals.map((t) => (
+              <BrandCard
+                key={t.id}
+                thread={t}
+                onStatusChange={onStatusChange}
+                onDeliverableToggle={onDeliverableToggle}
+                onDeliverableAdd={onDeliverableAdd}
+                gmailEmail={gmailEmail}
+              />
+            ))}
+            {closedDeals.length > 0 && (
+              <>
+                {openDeals.length > 0 && (
+                  <div className="closed-divider">
+                    <span>Closed deals ({closedDeals.length})</span>
+                  </div>
+                )}
+                {closedDeals.map((t) => (
+                  <BrandCard
+                    key={t.id}
+                    thread={t}
+                    onStatusChange={onStatusChange}
+                    onDeliverableToggle={onDeliverableToggle}
+                    onDeliverableAdd={onDeliverableAdd}
+                    gmailEmail={gmailEmail}
+                  />
+                ))}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>

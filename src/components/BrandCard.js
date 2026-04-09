@@ -139,6 +139,14 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
                   </div>
                 )}
               </div>
+              {thread.status !== "deal_closed" && (
+                <button
+                  className="close-deal-btn"
+                  onClick={(e) => { e.stopPropagation(); onStatusChange(thread.id, "deal_closed"); }}
+                >
+                  ✓ Close deal
+                </button>
+              )}
               <a href={gmailUrl} target="_blank" rel="noopener noreferrer"
                 className="gmail-open-btn" onClick={(e) => e.stopPropagation()}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
