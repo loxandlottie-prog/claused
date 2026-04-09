@@ -56,10 +56,10 @@ function getGmailUrl(thread, gmailEmail) {
 }
 
 export default function BrandCard({ thread, onStatusChange, gmailEmail }) {
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
   const since = daysSince(thread.lastMessage);
   const followUp = since >= 14 && thread.status !== "deal_closed";
   const s = STATUS[thread.status];
-  const next = NEXT_STATUS[thread.status];
 
   const websiteUrl = thread.domain ? `https://www.${thread.domain}` : null;
   const gmailUrl = getGmailUrl(thread, gmailEmail);
@@ -90,18 +90,32 @@ export default function BrandCard({ thread, onStatusChange, gmailEmail }) {
               )}
             </div>
             <div className="brand-top-right">
-              <span className={`status-badge ${s.cls}`}>{s.label}</span>
-              {next && (
+              <div className="status-picker" onClick={(e) => e.stopPropagation()}>
                 <button
-                  className="brand-advance-btn"
-                  onClick={() => onStatusChange(thread.id, next)}
-                  title={`Mark as: ${STATUS[next].label}`}
+                  className={`status-badge ${s.cls} status-badge-btn`}
+                  onClick={() => setShowStatusMenu((v) => !v)}
+                  title="Change status"
                 >
-                  {next === "you_replied" && "Replied ✓"}
-                  {next === "waiting_on_them" && "Sent ✓"}
-                  {next === "deal_closed" && "Close deal"}
+                  {s.label} ▾
                 </button>
-              )}
+                {showStatusMenu && (
+                  <div className="status-menu">
+                    {Object.entries(STATUS).map(([key, val]) => (
+                      <button
+                        key={key}
+                        className={`status-menu-item ${key === thread.status ? "status-menu-active" : ""}`}
+                        onClick={() => {
+                          onStatusChange(thread.id, key);
+                          setShowStatusMenu(false);
+                        }}
+                      >
+                        <span className={`status-menu-dot ${val.cls}`} />
+                        {val.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <a
                 href={gmailUrl}
                 target="_blank"

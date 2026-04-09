@@ -422,21 +422,54 @@ textarea { resize: vertical; }
 .status-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid #BFDBFE; }
 .status-green  { background: var(--green-dim);  color: #065F46;       border: 1px solid #A7F3D0; }
 
-/* Advance button */
-.brand-advance-btn {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--purple);
-  background: var(--purple-light);
-  border: 1.5px solid var(--purple-mid);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  white-space: nowrap;
-  transition: all 0.12s;
-  align-self: center;
+/* Status picker */
+.status-picker { position: relative; }
+.status-badge-btn {
+  cursor: pointer;
+  transition: opacity 0.12s;
+  user-select: none;
 }
-.brand-advance-btn:hover { background: var(--purple-mid); }
+.status-badge-btn:hover { opacity: 0.8; }
+.status-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 50;
+  min-width: 160px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.status-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  padding: 7px 10px;
+  border-radius: var(--radius-xs);
+  transition: background 0.1s;
+}
+.status-menu-item:hover { background: var(--bg); color: var(--text); }
+.status-menu-active { color: var(--text); font-weight: 600; background: var(--bg); }
+.status-menu-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-menu-dot.status-red    { background: var(--red); }
+.status-menu-dot.status-yellow { background: var(--yellow); }
+.status-menu-dot.status-blue   { background: var(--blue); }
+.status-menu-dot.status-green  { background: var(--green); }
 
 /* ─── Analytics Page ─────────────────────────────────────────── */
 .analytics-page { display: flex; flex-direction: column; gap: 28px; }
