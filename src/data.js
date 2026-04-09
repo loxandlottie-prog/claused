@@ -46,8 +46,8 @@ export const threads = [
     product: "Litter Genie Plus Disposal System",
     theirRate: 2000,
     yourRate: 3500,
-    status: "waiting_on_them",
-    revenue: null,
+    status: "deal_closed",
+    revenue: 3500,
     category: "litter & cat care",
   },
   {
