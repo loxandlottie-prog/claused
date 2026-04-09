@@ -15,6 +15,11 @@ export const threads = [
     status: "deal_closed",
     revenue: 2500,
     category: "litter & cat care",
+    deliverables: [
+      { id: 1, text: "TikTok video — unboxing", done: true },
+      { id: 2, text: "Instagram Reel", done: false },
+      { id: 3, text: "Story set (x3 frames)", done: false },
+    ],
   },
   {
     id: 2,

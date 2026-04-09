@@ -79,6 +79,26 @@ export default function App() {
     setThreads((prev) => [thread, ...prev]);
   };
 
+  const handleDeliverableToggle = (threadId, deliverableId) => {
+    setThreads((prev) => prev.map((t) =>
+      t.id !== threadId ? t : {
+        ...t,
+        deliverables: (t.deliverables || []).map((d) =>
+          d.id === deliverableId ? { ...d, done: !d.done } : d
+        ),
+      }
+    ));
+  };
+
+  const handleDeliverableAdd = (threadId, text) => {
+    setThreads((prev) => prev.map((t) =>
+      t.id !== threadId ? t : {
+        ...t,
+        deliverables: [...(t.deliverables || []), { id: Date.now(), text, done: false }],
+      }
+    ));
+  };
+
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
 
   return (
@@ -138,6 +158,8 @@ export default function App() {
             threads={threads}
             onStatusChange={handleStatusChange}
             onThreadAdd={handleThreadAdd}
+            onDeliverableToggle={handleDeliverableToggle}
+            onDeliverableAdd={handleDeliverableAdd}
             gmailConnected={gmail.connected}
             gmailEmail={gmail.email}
           />
