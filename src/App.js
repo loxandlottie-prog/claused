@@ -46,13 +46,11 @@ export default function App() {
         return r.json();
       })
       .then((gmailData) => {
-        if (gmailData.length > 0) {
-          // Merge: Gmail threads first, then any manually-added threads
-          setThreads((prev) => {
-            const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
-            return [...gmailData, ...manualThreads];
-          });
-        }
+        // Always replace demo data once Gmail is connected, even if inbox returns nothing
+        setThreads((prev) => {
+          const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
+          return [...gmailData, ...manualThreads];
+        });
       })
       .catch(console.error);
   };
