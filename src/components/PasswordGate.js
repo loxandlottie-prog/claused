@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 // Change this to whatever you want your password to be
-const PASSWORD = "claused2026";
+const PASSWORD = "inbora2026";
 
 export default function PasswordGate({ onUnlock }) {
   const [input, setInput] = useState("");
@@ -11,7 +11,7 @@ export default function PasswordGate({ onUnlock }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input === PASSWORD) {
-      sessionStorage.setItem("claused_unlocked", "1");
+      sessionStorage.setItem("inbora_unlocked", "1");
       onUnlock();
     } else {
       setError(true);
@@ -24,7 +24,7 @@ export default function PasswordGate({ onUnlock }) {
   return (
     <div className="gate-overlay">
       <form className={`gate-card ${shaking ? "gate-shake" : ""}`} onSubmit={handleSubmit}>
-        <span className="gate-wordmark">Claused</span>
+        <span className="gate-wordmark">Inbora</span>
         <p className="gate-hint">Enter your password to continue.</p>
         <input
           type="password"

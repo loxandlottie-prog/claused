@@ -22,7 +22,7 @@ function GmailBanner({ connected }) {
         <div>
           <p className="gmail-banner-title">Connect Gmail to auto-scan your inbox</p>
           <p className="gmail-banner-desc">
-            Claused will surface unanswered brand emails, product shipment confirmations, and proposal threads — so nothing slips through.
+            Inbora will surface unanswered brand emails, product shipment confirmations, and proposal threads — so nothing slips through.
           </p>
         </div>
       </div>

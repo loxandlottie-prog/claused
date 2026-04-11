@@ -70,7 +70,7 @@ export default function PasteModal({ onAdd, onClose }) {
         {!parsed ? (
           <>
             <p className="modal-hint">
-              Paste a raw email or DM from a brand. Claused will extract the contact, offer, and rate automatically.
+              Paste a raw email or DM from a brand. Inbora will extract the contact, offer, and rate automatically.
             </p>
             <textarea
               className="modal-textarea"

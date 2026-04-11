@@ -100,7 +100,7 @@ function EmailParser({ onParsed }) {
         className="email-parser-textarea"
         value={text}
         onChange={(e) => { setText(e.target.value); setParsed(null); setError(""); }}
-        placeholder={"Paste the brand's email here...\n\nClaused will extract the brand name, deal value, and deliverables automatically."}
+        placeholder={"Paste the brand's email here...\n\nInbora will extract the brand name, deal value, and deliverables automatically."}
         rows={6}
       />
       {error && <div className="email-parser-error">{error}</div>}

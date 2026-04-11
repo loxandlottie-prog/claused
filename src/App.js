@@ -8,7 +8,7 @@ import PasswordGate from "./components/PasswordGate";
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(
-    sessionStorage.getItem("claused_unlocked") === "1"
+    sessionStorage.getItem("inbora_unlocked") === "1"
   );
   const [activeTab, setActiveTab] = useState("home");
   const [threads, setThreads] = useState(demoThreads);
@@ -103,7 +103,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-inner">
-          <span className="wordmark">Claused</span>
+          <span className="wordmark">Inbora</span>
           <nav className="header-nav">
             <button
               className={`header-tab ${activeTab === "home" ? "header-tab-active" : ""}`}

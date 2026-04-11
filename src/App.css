@@ -2,9 +2,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --purple: #7C5CFC;
-  --purple-light: #F0ECFF;
-  --purple-mid: #DDD6FE;
+  --purple: #0D9488;
+  --purple-light: #F0FDFA;
+  --purple-mid: #99F6E4;
   --bg: #FAFAFA;
   --surface: #FFFFFF;
   --border: #E5E7EB;
@@ -51,7 +51,7 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--purple);
-  box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+  box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
 }
 textarea { resize: vertical; }
 
