@@ -35,6 +35,18 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
   const closedDeals = filtered.filter((t) => t.status === "deal_closed");
   const passedDeals = filtered.filter((t) => t.status === "deal_passed");
 
+  if (threads.length === 0) {
+    return (
+      <div className="home-page">
+        <div className="empty-hero">
+          <div className="empty-hero-icon">📬</div>
+          <h2 className="empty-hero-title">No brands yet</h2>
+          <p className="empty-hero-desc">Paste a thread or connect Gmail to get started.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-page">
       <div className="stat-grid">

@@ -3,8 +3,9 @@ import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
   reply_needed:    { label: "Reply needed",    cls: "status-red"    },
-  waiting_on_them: { label: "Waiting on them", cls: "status-yellow" },
   you_replied:     { label: "You replied",     cls: "status-blue"   },
+  waiting_on_them: { label: "Waiting on them", cls: "status-yellow" },
+  in_progress:     { label: "In progress",     cls: "status-teal"   },
   deal_closed:     { label: "Deal closed",     cls: "status-green"  },
   deal_passed:     { label: "Passed",          cls: "status-gray"   },
 };
@@ -179,6 +180,10 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
           )}
 
           <div className="brand-offer">{thread.offer || <span className="muted">No offer details</span>}</div>
+
+          {thread.notes && (
+            <div className="brand-notes">{thread.notes}</div>
+          )}
 
           {/* Next step chip — shown on card face */}
           {nextStep && (
