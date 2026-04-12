@@ -239,51 +239,6 @@ function extractOfferSummary(msgs) {
 
 // Extract the most recent actionable next step from the last brand message.
 // Returns a short string like "Please share your rate card" or null.
-function extractNextStep(msgs, userEmail) {
-  if (!msgs || msgs.length === 0) return null;
-
-  // Find the last message NOT from the user (i.e. from the brand/agency).
-  // Use SENT label as primary signal; fall back to email comparison.
-  let brandMsg = null;
-  for (let i = msgs.length - 1; i >= 0; i--) {
-    const msg = msgs[i];
-    const labels = msg.labelIds || [];
-    if (labels.includes("SENT")) continue; // definitely ours — skip
-    if (userEmail) {
-      const from = parseFrom(getHeader(msg, "From"));
-      if (from.email.toLowerCase() === userEmail.toLowerCase()) continue;
-    }
-    brandMsg = msg;
-    break;
-  }
-  if (!brandMsg) return null;
-
-  const body = getTextBody(brandMsg.payload);
-  if (!body) return null;
-
-  const text = body.slice(0, 3000);
-
-  // Sentence-level scan for action-request patterns
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  const ACTION_RE = /\b(could you|can you|please|would you|let us know|let me know|kindly|we need|we'd love|we would love|waiting for|looking forward to hearing|share your|send us|send over|confirm|reply|respond|get back)\b/i;
-  const DEADLINE_RE = /\bby\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|\w+ \d+|end of (?:the )?(?:week|month|day)|\d{1,2}\/\d{1,2})\b/i;
-
-  for (const sentence of sentences) {
-    const s = sentence.trim();
-    if (s.length < 10 || s.length > 200) continue;
-    if (ACTION_RE.test(s)) {
-      // Clean up: strip leading/trailing junk, collapse whitespace
-      const clean = s.replace(/\s+/g, " ").replace(/^[^A-Za-z]+/, "").trim();
-      if (clean.length > 5) return clean.replace(/[.!?]+$/, "");
-    }
-  }
-
-  // Check for a deadline mention in the whole text even if no action sentence found
-  const deadlineMatch = text.match(DEADLINE_RE);
-  if (deadlineMatch) return `Deadline: ${deadlineMatch[0]}`;
-
-  return null;
-}
 
 const CLOSED_KEYWORDS = [
   "invoice", "invoiced", "payment received", "payment sent", "paid",
@@ -447,7 +402,6 @@ export default async function handler(req, res) {
       const allBodyText = msgs.map((m) => getTextBody(m.payload)).join("\n");
       const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject, allBodyText);
       const offerSummary = extractOfferSummary(msgs);
-      const inferredNextStep = extractNextStep(msgs, userEmail);
       const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
@@ -463,7 +417,6 @@ export default async function handler(req, res) {
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
         offer: offerSummary || cleanedSubject,
-        inferredNextStep,
         theirRate: null,
         yourRate: null,
         status,

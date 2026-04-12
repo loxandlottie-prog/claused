@@ -202,12 +202,6 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
               <span className="deliverable-progress">{doneCount}/{deliverables.length}</span>
             </div>
           )}
-          {!hasDeliverables && thread.inferredNextStep && (
-            <div className="next-step-row next-step-inferred">
-              <span className="next-step-label">Next</span>
-              <span className="next-step-text">{thread.inferredNextStep}</span>
-            </div>
-          )}
 
           <div className="brand-meta-row">
             <div className="brand-rates">
