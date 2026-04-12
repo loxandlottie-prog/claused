@@ -92,13 +92,15 @@ const SKIP_LOCAL = /^(noreply|no-reply|donotreply|notifications?|mailer|bounce|s
 
 const BRAND_QUERY = [
   // Standard partnership language
-  "collaboration", "sponsorship", "partnership", "sponsored",
+  "collaboration", "collaborating", "sponsorship", "partnership", "sponsored",
   "ambassador", "collab", '"brand deal"', '"paid partnership"',
+  // Campaign language (agency-managed deals like "Fresh Step x Creator Campaign")
+  "campaign", '"content brief"', '"creative brief"', '"posting instructions"',
+  '"go live"', '"concept feedback"', '"content feedback"', '"phase 1"', '"phase 2"',
   // Common real-world outreach phrases
   '"work with you"', '"work with us"', '"work together"',
   '"would love to partner"', '"opportunity to partner"',
-  '"campaign opportunity"', '"content opportunity"',
-  '"creator opportunity"', '"creator program"',
+  '"content opportunity"', '"creator opportunity"', '"creator program"',
   // Gifting / seeding
   '"gifted"', '"product seeding"', '"send you"', '"gifting"',
   // Creator / influencer terms
@@ -107,6 +109,9 @@ const BRAND_QUERY = [
   // Compensation signals
   '"paid collaboration"', '"paid campaign"', '"sponsored content"',
   '"our budget"', '"compensation"', "deliverables",
+  // Soft offer / rate negotiation
+  '"soft offer"', '"formal offer"', '"going rates"', '"current rates"',
+  '"usage rights"', '"exclusivity"',
 ].join(" OR ");
 
 function inferStatus(msgs, userEmail) {
@@ -145,7 +150,7 @@ export default async function handler(req, res) {
   const gmailFetch = (url) =>
     fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
 
-  const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/threads?q=${encodeURIComponent(BRAND_QUERY)}&maxResults=40`;
+  const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/threads?q=${encodeURIComponent(BRAND_QUERY)}&maxResults=150`;
   let listRes = await gmailFetch(listUrl);
 
   if (listRes.status === 401 && refreshToken) {
@@ -168,7 +173,7 @@ export default async function handler(req, res) {
   // Use fields param to keep payload small (no base64 body)
   const fields = "messages(id,snippet,payload(headers))";
   const details = await Promise.all(
-    threads.slice(0, 30).map(({ id }) =>
+    threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
         `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?fields=${encodeURIComponent(fields)}`
       )
