@@ -30,9 +30,10 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
     return t.status === filter;
   });
 
-  // Open deals first, closed at bottom
-  const openDeals  = filtered.filter((t) => t.status !== "deal_closed");
+  // Open deals first, then closed, then passed at the very bottom
+  const openDeals   = filtered.filter((t) => t.status !== "deal_closed" && t.status !== "deal_passed");
   const closedDeals = filtered.filter((t) => t.status === "deal_closed");
+  const passedDeals = filtered.filter((t) => t.status === "deal_passed");
 
   return (
     <div className="home-page">
@@ -94,31 +95,24 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
         ) : (
           <>
             {openDeals.map((t) => (
-              <BrandCard
-                key={t.id}
-                thread={t}
-                onStatusChange={onStatusChange}
-                onDeliverableToggle={onDeliverableToggle}
-                onDeliverableAdd={onDeliverableAdd}
-                gmailEmail={gmailEmail}
-              />
+              <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
+                onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
             ))}
             {closedDeals.length > 0 && (
               <>
-                {openDeals.length > 0 && (
-                  <div className="closed-divider">
-                    <span>Closed deals ({closedDeals.length})</span>
-                  </div>
-                )}
+                <div className="closed-divider"><span>Closed deals ({closedDeals.length})</span></div>
                 {closedDeals.map((t) => (
-                  <BrandCard
-                    key={t.id}
-                    thread={t}
-                    onStatusChange={onStatusChange}
-                    onDeliverableToggle={onDeliverableToggle}
-                    onDeliverableAdd={onDeliverableAdd}
-                    gmailEmail={gmailEmail}
-                  />
+                  <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
+                    onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
+                ))}
+              </>
+            )}
+            {passedDeals.length > 0 && (
+              <>
+                <div className="closed-divider closed-divider-passed"><span>Passed ({passedDeals.length})</span></div>
+                {passedDeals.map((t) => (
+                  <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
+                    onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
                 ))}
               </>
             )}

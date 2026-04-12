@@ -6,6 +6,7 @@ const STATUS = {
   waiting_on_them: { label: "Waiting on them", cls: "status-yellow" },
   you_replied:     { label: "You replied",     cls: "status-blue"   },
   deal_closed:     { label: "Deal closed",     cls: "status-green"  },
+  deal_passed:     { label: "Passed",          cls: "status-gray"   },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -139,13 +140,21 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
                   </div>
                 )}
               </div>
-              {thread.status !== "deal_closed" && (
-                <button
-                  className="close-deal-btn"
-                  onClick={(e) => { e.stopPropagation(); onStatusChange(thread.id, "deal_closed"); }}
-                >
-                  ✓ Close deal
-                </button>
+              {thread.status !== "deal_closed" && thread.status !== "deal_passed" && (
+                <>
+                  <button
+                    className="close-deal-btn"
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(thread.id, "deal_closed"); }}
+                  >
+                    ✓ Close deal
+                  </button>
+                  <button
+                    className="pass-deal-btn"
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(thread.id, "deal_passed"); }}
+                  >
+                    ✕ Pass
+                  </button>
+                </>
               )}
               <a href={gmailUrl} target="_blank" rel="noopener noreferrer"
                 className="gmail-open-btn" onClick={(e) => e.stopPropagation()}>
