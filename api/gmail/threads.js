@@ -279,10 +279,18 @@ const CLOSED_KEYWORDS = [
 ];
 
 const SKIP_DOMAINS = new Set([
-  "gmail.com", "googlemail.com", "noreply.github.com",
-  "accounts.google.com", "notifications.google.com",
+  "gmail.com", "googlemail.com",
+  "noreply.github.com", "accounts.google.com", "notifications.google.com",
+  // Amazon — bulk marketing/program emails, never direct brand-deal outreach
+  "amazon.com", "store-news.amazon.com", "affiliate-program.amazon.com",
+  "associates.amazon.com", "m.amazonservices.com", "amazon.co.uk",
+  // Other high-volume automated platforms
+  "substack.com", "beehiiv.com", "convertkit.com", "mailchimp.com",
+  "constantcontact.com", "klaviyo.com", "sendgrid.net", "mailgun.org",
 ]);
-const SKIP_LOCAL = /^(noreply|no-reply|donotreply|notifications?|mailer|bounce|support|hello|info|newsletter|marketing|alerts?)$/i;
+// Also skip local-parts that look like automated/bulk senders:
+// covers: store-news, noreply-store, order-updates, digest-weekly, etc.
+const SKIP_LOCAL = /^(noreply|no-reply|donotreply|notifications?|mailer|bounce|support|hello|info|newsletter|marketing|alerts?|unsubscribe|digest|updates?|deals?|offers?|promos?|coupons?|store-\w+|\w+-news|\w+-updates?|\w+-alerts?|\w+-noreply)$/i;
 
 const BRAND_QUERY = [
   // Standard partnership language
