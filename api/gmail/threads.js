@@ -56,6 +56,53 @@ function stripSubjectPrefixes(subject) {
   return s;
 }
 
+// Recursively extract plain text from a Gmail message payload (handles multipart MIME).
+// Only decodes up to ~3000 chars to keep things fast.
+function getTextBody(payload) {
+  if (!payload) return "";
+  if (payload.mimeType === "text/plain" && payload.body?.data) {
+    try {
+      const text = Buffer.from(payload.body.data, "base64url").toString("utf-8");
+      return text.slice(0, 3000);
+    } catch { return ""; }
+  }
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      const text = getTextBody(part);
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
+// Extract a brand name from the plain-text body of the first email in a thread.
+// Looks for common agency/brand outreach patterns.
+function extractBrandFromBody(text) {
+  if (!text) return null;
+  const intro = text.slice(0, 2000);
+  const patterns = [
+    // "reaching out on behalf of Fresh Step"
+    /\bon behalf of\s+([A-Z][A-Za-z0-9&'.() ]{1,40?}?)(?:\s*[,!.]|\s+(?:to|and|would|is|has)\b)/,
+    // "I'm Sarah from Fresh Step —"
+    /\bfrom\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
+    // "our team at Fresh Step"  /  "I work at Fresh Step"
+    /\bat\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
+    // "Fresh Step is looking to / would love to / is excited to"
+    /\b([A-Z][A-Za-z0-9&'. ]{1,30}?)\s+(?:is looking to|would love to|is excited to|has a campaign|is reaching out|is interested in)/,
+    // "representing Fresh Step"
+    /\brepresenting\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[,!.]|\s+(?:and|to|in)\b)/i,
+  ];
+  for (const pat of patterns) {
+    const m = intro.match(pat);
+    const candidate = m?.[1]?.trim();
+    // Sanity check: at least 2 chars, not a common false-positive word
+    if (candidate && candidate.length >= 2 && !/^(hi|hey|hope|happy|thanks|thank|please|just|we|i|the|our|your|this|that)$/i.test(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 // When the brand is known but the sender is an agency, guess the brand's own domain.
 // e.g. "Fresh Step" → "freshstep.com". Logo cascade handles misses gracefully.
 function guessBrandDomain(brandName) {
@@ -63,8 +110,8 @@ function guessBrandDomain(brandName) {
 }
 
 // Returns { brand, senderIsAgency }
-// senderIsAgency = true when brand was inferred from subject (sender ≠ brand)
-function toBrandInfo(contact, domain, subject) {
+// senderIsAgency = true when brand was inferred from subject/body (sender ≠ brand)
+function toBrandInfo(contact, domain, subject, bodyText) {
   const clean = stripSubjectPrefixes(subject);
 
   // 1. Subject: "Brand x Creator ..." or "Brand Campaign/Partnership/..."
@@ -75,16 +122,24 @@ function toBrandInfo(contact, domain, subject) {
     if (labelMatch) return { brand: labelMatch[1].trim(), senderIsAgency: true };
   }
 
-  // 2. Sender name: "... at Brand Name"
+  // 2. Email body — scan all message bodies for brand mention patterns
+  const bodyBrand = extractBrandFromBody(bodyText);
+  if (bodyBrand) {
+    const domainWord = domain.split(".")[0].toLowerCase();
+    const isAgency = !bodyBrand.toLowerCase().replace(/\s+/g, "").includes(domainWord);
+    return { brand: bodyBrand, senderIsAgency: isAgency };
+  }
+
+  // 3. Sender name: "... at Brand Name"
   const name = contact.name;
   const atMatch = name.match(/\bat\s+([A-Z][A-Za-z0-9&', .]+)/)?.[1];
   if (atMatch) return { brand: atMatch.trim(), senderIsAgency: true };
 
-  // 3. Sender name: "Brand Team / Brand Partnerships"
+  // 4. Sender name: "Brand Team / Brand Partnerships"
   const teamMatch = name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
   if (teamMatch) return { brand: teamMatch.trim(), senderIsAgency: false };
 
-  // 4. Fall back to sender domain — sender IS the brand
+  // 5. Fall back to sender domain — sender IS the brand
   const host = domain.replace(/^(mail\.|em\.|email\.|mg\.|send\.|news\.)/, "");
   const parts = host.split(".");
   const raw = parts.length > 2 ? parts[parts.length - 2] : parts[0];
@@ -189,9 +244,8 @@ export default async function handler(req, res) {
   const userInfo = userInfoRes.ok ? await userInfoRes.json() : {};
   const userEmail = userInfo.email || null;
 
-  // Fetch each thread — include snippet by omitting format=metadata
-  // Use fields param to keep payload small (no base64 body)
-  const fields = "messages(id,snippet,payload(headers))";
+  // Fetch each thread with headers + body parts (for brand extraction from body text)
+  const fields = "messages(id,snippet,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
   const details = await Promise.all(
     threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
@@ -228,7 +282,9 @@ export default async function handler(req, res) {
       if (!contact.email.includes("@")) return null;
 
       const cleanedSubject = stripSubjectPrefixes(subject);
-      const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject);
+      // Concatenate body text from all messages for brand extraction
+      const allBodyText = msgs.map((m) => getTextBody(m.payload)).join("\n");
+      const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject, allBodyText);
       const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
