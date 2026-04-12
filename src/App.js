@@ -11,7 +11,7 @@ export default function App() {
     sessionStorage.getItem("inbora_unlocked") === "1"
   );
   const [activeTab, setActiveTab] = useState("home");
-  const [threads, setThreads] = useState(demoThreads);
+  const [threads, setThreads] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   // Gmail connection state
