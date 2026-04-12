@@ -56,31 +56,39 @@ function stripSubjectPrefixes(subject) {
   return s;
 }
 
-function toBrandName(contact, domain, subject) {
+// When the brand is known but the sender is an agency, guess the brand's own domain.
+// e.g. "Fresh Step" → "freshstep.com". Logo cascade handles misses gracefully.
+function guessBrandDomain(brandName) {
+  return brandName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "") + ".com";
+}
+
+// Returns { brand, senderIsAgency }
+// senderIsAgency = true when brand was inferred from subject (sender ≠ brand)
+function toBrandInfo(contact, domain, subject) {
   const clean = stripSubjectPrefixes(subject);
 
   // 1. Subject: "Brand x Creator ..." or "Brand Campaign/Partnership/..."
   if (clean) {
     const xMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
-    if (xMatch) return xMatch[1].trim();
+    if (xMatch) return { brand: xMatch[1].trim(), senderIsAgency: true };
     const labelMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
-    if (labelMatch) return labelMatch[1].trim();
+    if (labelMatch) return { brand: labelMatch[1].trim(), senderIsAgency: true };
   }
 
-  // 2. Sender name: "... at Brand Name" (common in agency signatures)
+  // 2. Sender name: "... at Brand Name"
   const name = contact.name;
   const atMatch = name.match(/\bat\s+([A-Z][A-Za-z0-9&', .]+)/)?.[1];
-  if (atMatch) return atMatch.trim();
+  if (atMatch) return { brand: atMatch.trim(), senderIsAgency: true };
 
   // 3. Sender name: "Brand Team / Brand Partnerships"
   const teamMatch = name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
-  if (teamMatch) return teamMatch.trim();
+  if (teamMatch) return { brand: teamMatch.trim(), senderIsAgency: false };
 
-  // 4. Fall back to sender domain
+  // 4. Fall back to sender domain — sender IS the brand
   const host = domain.replace(/^(mail\.|em\.|email\.|mg\.|send\.|news\.)/, "");
   const parts = host.split(".");
   const raw = parts.length > 2 ? parts[parts.length - 2] : parts[0];
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+  return { brand: raw.charAt(0).toUpperCase() + raw.slice(1), senderIsAgency: false };
 }
 
 function toISODate(raw) {
@@ -220,7 +228,8 @@ export default async function handler(req, res) {
       if (!contact.email.includes("@")) return null;
 
       const cleanedSubject = stripSubjectPrefixes(subject);
-      const brand = toBrandName(contact, domain, subject);
+      const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject);
+      const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
       const status = inferStatus(msgs, userEmail);
@@ -230,7 +239,7 @@ export default async function handler(req, res) {
         brand,
         logo: initials,
         logoColor: colors[colorIdx],
-        domain,
+        domain: displayDomain,
         contact,
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
