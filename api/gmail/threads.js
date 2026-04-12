@@ -202,5 +202,32 @@ export default async function handler(req, res) {
     })
     .filter(Boolean);
 
-  res.json(parsed);
+  // Deduplicate: one card per domain, keeping most urgent status,
+  // earliest firstReached, latest lastMessage (and that thread's subject/contact).
+  const STATUS_PRIORITY = { reply_needed: 0, you_replied: 1, waiting_on_them: 2, deal_closed: 3 };
+  const grouped = {};
+  for (const t of parsed) {
+    const key = t.domain;
+    if (!grouped[key]) {
+      grouped[key] = { ...t };
+    } else {
+      const g = grouped[key];
+      // Earliest first contact
+      if (t.firstReached < g.firstReached) g.firstReached = t.firstReached;
+      // Latest message wins for id, contact, offer, lastMessage
+      if (t.lastMessage > g.lastMessage) {
+        g.lastMessage = t.lastMessage;
+        g.id = t.id;
+        g.contact = t.contact;
+        g.offer = t.offer;
+      }
+      // Most urgent status
+      if ((STATUS_PRIORITY[t.status] ?? 99) < (STATUS_PRIORITY[g.status] ?? 99)) {
+        g.status = t.status;
+      }
+      g.messageCount = (g.messageCount || 1) + (t.messageCount || 1);
+    }
+  }
+
+  res.json(Object.values(grouped));
 }
