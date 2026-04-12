@@ -232,14 +232,19 @@ function extractOfferSummary(msgs) {
 function extractNextStep(msgs, userEmail) {
   if (!msgs || msgs.length === 0) return null;
 
-  // Find the last message NOT from the user (i.e. from the brand/agency)
+  // Find the last message NOT from the user (i.e. from the brand/agency).
+  // Use SENT label as primary signal; fall back to email comparison.
   let brandMsg = null;
   for (let i = msgs.length - 1; i >= 0; i--) {
-    const from = parseFrom(getHeader(msgs[i], "From"));
-    if (!userEmail || from.email.toLowerCase() !== userEmail.toLowerCase()) {
-      brandMsg = msgs[i];
-      break;
+    const msg = msgs[i];
+    const labels = msg.labelIds || [];
+    if (labels.includes("SENT")) continue; // definitely ours — skip
+    if (userEmail) {
+      const from = parseFrom(getHeader(msg, "From"));
+      if (from.email.toLowerCase() === userEmail.toLowerCase()) continue;
     }
+    brandMsg = msg;
+    break;
   }
   if (!brandMsg) return null;
 
@@ -326,18 +331,29 @@ function inferStatus(msgs, userEmail) {
   // Closed if strong deal-completion signals
   if (CLOSED_KEYWORDS.some((kw) => allText.includes(kw))) return "deal_closed";
 
-  // Determine who sent the last message
-  if (userEmail) {
-    const lastFrom = parseFrom(getHeader(last, "From"));
-    const weSentLast = lastFrom.email.toLowerCase() === userEmail.toLowerCase();
-    if (weSentLast) return "waiting_on_them";
-  }
+  // Determine who sent the last message.
+  // Primary signal: SENT label (reliable regardless of alias/from address).
+  // Fallback: compare From address to userEmail.
+  const lastLabels = last.labelIds || [];
+  const weSentLast =
+    lastLabels.includes("SENT") ||
+    (userEmail
+      ? parseFrom(getHeader(last, "From")).email.toLowerCase() === userEmail.toLowerCase()
+      : false);
 
-  // If there are multiple messages, we've at least replied at some point
-  if (msgs.length > 2) return "waiting_on_them";
-  if (msgs.length === 2) return "you_replied";
+  if (weSentLast) return "waiting_on_them";
 
-  return "reply_needed";
+  // Brand sent the last message.
+  // Only "reply_needed" if we have never replied at all (no SENT message anywhere in thread).
+  const everReplied = msgs.some((m) => {
+    const labels = m.labelIds || [];
+    if (labels.includes("SENT")) return true;
+    if (userEmail) {
+      return parseFrom(getHeader(m, "From")).email.toLowerCase() === userEmail.toLowerCase();
+    }
+    return false;
+  });
+  return everReplied ? "you_replied" : "reply_needed";
 }
 
 export default async function handler(req, res) {
@@ -372,7 +388,8 @@ export default async function handler(req, res) {
   const userEmail = userInfo.email || null;
 
   // Fetch each thread with headers + body parts (for brand extraction from body text)
-  const fields = "messages(id,snippet,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
+  // labelIds is included so inferStatus can detect SENT messages regardless of From address
+  const fields = "messages(id,snippet,labelIds,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
   const details = await Promise.all(
     threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
@@ -444,7 +461,6 @@ export default async function handler(req, res) {
   // Deduplicate by brand name (not domain) so agency-managed deals stay separate.
   // e.g. "Fresh Step" and "Petlibro" both emailed via autumncommunications.com
   // should remain two distinct cards.
-  const STATUS_PRIORITY = { reply_needed: 0, you_replied: 1, waiting_on_them: 2, deal_closed: 3 };
   const grouped = {};
   for (const t of parsed) {
     const key = t.brand.toLowerCase();
@@ -454,15 +470,14 @@ export default async function handler(req, res) {
       const g = grouped[key];
       // Earliest first contact
       if (t.firstReached < g.firstReached) g.firstReached = t.firstReached;
-      // Latest message wins for id, contact, offer, lastMessage
+      // Latest message wins for id, contact, offer, lastMessage, AND status.
+      // Status must follow the most recent thread — an old OOO or stale thread
+      // must never override the status of a more recent exchange.
       if (t.lastMessage > g.lastMessage) {
         g.lastMessage = t.lastMessage;
         g.id = t.id;
         g.contact = t.contact;
         g.offer = t.offer;
-      }
-      // Most urgent status
-      if ((STATUS_PRIORITY[t.status] ?? 99) < (STATUS_PRIORITY[g.status] ?? 99)) {
         g.status = t.status;
       }
       g.messageCount = (g.messageCount || 1) + (t.messageCount || 1);
