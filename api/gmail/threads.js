@@ -45,10 +45,22 @@ function parseFrom(raw) {
   return { name: "", email: emailMatch ? emailMatch[0] : raw };
 }
 
+// Strip Re:, Fwd:, OOO headers ("OOO | 4/1-4/7 Re:", "Automatic Reply:", etc.)
+// Repeats until no more known prefixes remain.
+function stripSubjectPrefixes(subject) {
+  if (!subject) return "";
+  let s = subject.trim();
+  const PREFIX = /^(?:re|fwd?|oo+|out of office|automatic reply|auto.?reply)[^:]*:\s*/i;
+  let prev;
+  do { prev = s; s = s.replace(PREFIX, "").trim(); } while (s !== prev);
+  return s;
+}
+
 function toBrandName(contact, domain, subject) {
-  // 1. Subject line: "Brand x Creator ..." or "Brand Campaign/Partnership/Collab"
-  if (subject) {
-    const clean = subject.replace(/^(re|fwd|fw):\s*/i, "").trim();
+  const clean = stripSubjectPrefixes(subject);
+
+  // 1. Subject: "Brand x Creator ..." or "Brand Campaign/Partnership/..."
+  if (clean) {
     const xMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
     if (xMatch) return xMatch[1].trim();
     const labelMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
@@ -60,7 +72,7 @@ function toBrandName(contact, domain, subject) {
   const atMatch = name.match(/\bat\s+([A-Z][A-Za-z0-9&', .]+)/)?.[1];
   if (atMatch) return atMatch.trim();
 
-  // 3. Sender name starts with "Brand Team / Brand Partnerships"
+  // 3. Sender name: "Brand Team / Brand Partnerships"
   const teamMatch = name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
   if (teamMatch) return teamMatch.trim();
 
@@ -207,6 +219,7 @@ export default async function handler(req, res) {
       if (SKIP_LOCAL.test(localPart)) return null;
       if (!contact.email.includes("@")) return null;
 
+      const cleanedSubject = stripSubjectPrefixes(subject);
       const brand = toBrandName(contact, domain, subject);
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
@@ -221,7 +234,7 @@ export default async function handler(req, res) {
         contact,
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
-        offer: subject,
+        offer: cleanedSubject,
         theirRate: null,
         yourRate: null,
         status,
