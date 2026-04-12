@@ -327,6 +327,47 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 
+.actions-picker { position: relative; }
+.actions-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 1px;
+  transition: all 0.12s;
+}
+.actions-menu-btn:hover { color: var(--text); background: var(--bg); }
+.actions-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  min-width: 130px;
+  z-index: 20;
+  overflow: hidden;
+}
+.actions-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.1s;
+}
+.actions-item-close { color: #065F46; }
+.actions-item-close:hover { background: var(--green-dim); }
+.actions-item-pass { color: var(--red); }
+.actions-item-pass:hover { background: var(--red-dim); }
+
 .gmail-icon-btn {
   display: flex;
   align-items: center;
