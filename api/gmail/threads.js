@@ -77,10 +77,22 @@ const SKIP_DOMAINS = new Set([
 const SKIP_LOCAL = /^(noreply|no-reply|donotreply|notifications?|mailer|bounce|support|hello|info|newsletter|marketing|alerts?)$/i;
 
 const BRAND_QUERY = [
+  // Standard partnership language
   "collaboration", "sponsorship", "partnership", "sponsored",
-  "ambassador", '"paid partnership"', '"brand deal"',
-  '"work together"', "collab", '"gifted"', '"product seeding"',
-  '"content creator"', '"influencer"',
+  "ambassador", "collab", '"brand deal"', '"paid partnership"',
+  // Common real-world outreach phrases
+  '"work with you"', '"work with us"', '"work together"',
+  '"would love to partner"', '"opportunity to partner"',
+  '"campaign opportunity"', '"content opportunity"',
+  '"creator opportunity"', '"creator program"',
+  // Gifting / seeding
+  '"gifted"', '"product seeding"', '"send you"', '"gifting"',
+  // Creator / influencer terms
+  '"content creator"', '"influencer"', '"rate card"',
+  '"brand collaboration"', '"brand partnership"',
+  // Compensation signals
+  '"paid collaboration"', '"paid campaign"', '"sponsored content"',
+  '"our budget"', '"compensation"', "deliverables",
 ].join(" OR ");
 
 function inferStatus(msgs, userEmail) {
