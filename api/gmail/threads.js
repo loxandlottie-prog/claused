@@ -45,12 +45,26 @@ function parseFrom(raw) {
   return { name: "", email: emailMatch ? emailMatch[0] : raw };
 }
 
-function toBrandName(contact, domain) {
+function toBrandName(contact, domain, subject) {
+  // 1. Subject line: "Brand x Creator ..." or "Brand Campaign/Partnership/Collab"
+  if (subject) {
+    const clean = subject.replace(/^(re|fwd|fw):\s*/i, "").trim();
+    const xMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
+    if (xMatch) return xMatch[1].trim();
+    const labelMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
+    if (labelMatch) return labelMatch[1].trim();
+  }
+
+  // 2. Sender name: "... at Brand Name" (common in agency signatures)
   const name = contact.name;
-  const brandFromName =
-    name.match(/\bat\s+([A-Z][A-Za-z0-9& .]+)/)?.[1] ||
-    name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
-  if (brandFromName) return brandFromName.trim();
+  const atMatch = name.match(/\bat\s+([A-Z][A-Za-z0-9&', .]+)/)?.[1];
+  if (atMatch) return atMatch.trim();
+
+  // 3. Sender name starts with "Brand Team / Brand Partnerships"
+  const teamMatch = name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
+  if (teamMatch) return teamMatch.trim();
+
+  // 4. Fall back to sender domain
   const host = domain.replace(/^(mail\.|em\.|email\.|mg\.|send\.|news\.)/, "");
   const parts = host.split(".");
   const raw = parts.length > 2 ? parts[parts.length - 2] : parts[0];
@@ -188,7 +202,7 @@ export default async function handler(req, res) {
       if (SKIP_LOCAL.test(localPart)) return null;
       if (!contact.email.includes("@")) return null;
 
-      const brand = toBrandName(contact, domain);
+      const brand = toBrandName(contact, domain, subject);
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
       const status = inferStatus(msgs, userEmail);
@@ -214,12 +228,13 @@ export default async function handler(req, res) {
     })
     .filter(Boolean);
 
-  // Deduplicate: one card per domain, keeping most urgent status,
-  // earliest firstReached, latest lastMessage (and that thread's subject/contact).
+  // Deduplicate by brand name (not domain) so agency-managed deals stay separate.
+  // e.g. "Fresh Step" and "Petlibro" both emailed via autumncommunications.com
+  // should remain two distinct cards.
   const STATUS_PRIORITY = { reply_needed: 0, you_replied: 1, waiting_on_them: 2, deal_closed: 3 };
   const grouped = {};
   for (const t of parsed) {
-    const key = t.domain;
+    const key = t.brand.toLowerCase();
     if (!grouped[key]) {
       grouped[key] = { ...t };
     } else {
