@@ -151,6 +151,125 @@ function toISODate(raw) {
   catch { return new Date().toISOString().slice(0, 10); }
 }
 
+// Build a concise deal summary from all message bodies.
+// Examples: "Paid · 4x Reels + 2x Stories · $9,200"  /  "Gifted product · TikTok + Stories"  /  "Affiliate program"
+function extractOfferSummary(msgs) {
+  const bodies = msgs.map((m) => getTextBody(m.payload)).join("\n");
+  if (!bodies.trim()) return null;
+
+  const text = bodies.slice(0, 8000);
+
+  // --- compensation type ---
+  let compType = null;
+  if (/\bgifted\b|\bproduct seeding\b|\bsend you\b/i.test(text) && !/\bpaid\b|\bcompensation\b|\bbudget\b|\brate\b|\bfee\b/i.test(text)) {
+    compType = "Gifted product";
+  } else if (/\baffiliate\b/i.test(text)) {
+    compType = "Affiliate";
+  } else if (/\bpaid\b|\bsponsored\b|\bcompensation\b|\bbudget\b|\brate\b|\bfee\b/i.test(text)) {
+    compType = "Paid";
+  } else if (/\bambassador\b/i.test(text)) {
+    compType = "Ambassador";
+  }
+
+  // --- deliverable types (with counts where possible) ---
+  const delivTypes = [];
+  // Match patterns like "2 Reels", "4x TikTok", "one Instagram Story", etc.
+  const DELIV_PATTERNS = [
+    { re: /(\d+)\s*[x×]?\s*(?:instagram\s+)?reels?/gi, label: "Reel" },
+    { re: /(\d+)\s*[x×]?\s*(?:instagram\s+)?stor(?:y|ies)/gi, label: "Story" },
+    { re: /(\d+)\s*[x×]?\s*tiktok\s+(?:video|post)?s?/gi, label: "TikTok" },
+    { re: /(\d+)\s*[x×]?\s*youtube\s+(?:video|short)?s?/gi, label: "YouTube" },
+    { re: /(\d+)\s*[x×]?\s*(?:static\s+)?posts?/gi, label: "Post" },
+  ];
+  // Also catch mentions without counts
+  const MENTION_PATTERNS = [
+    { re: /\breels?\b/i, label: "Reels" },
+    { re: /\bstori(?:es|y)\b/i, label: "Stories" },
+    { re: /\btiktok\b/i, label: "TikTok" },
+    { re: /\byoutube\b/i, label: "YouTube" },
+    { re: /\bstatic\s+post\b/i, label: "Static post" },
+  ];
+
+  const counted = new Map(); // label → max count seen
+  for (const { re, label } of DELIV_PATTERNS) {
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(text)) !== null) {
+      const n = parseInt(m[1], 10);
+      if (!counted.has(label) || n > counted.get(label)) counted.set(label, n);
+    }
+  }
+  if (counted.size > 0) {
+    for (const [label, n] of counted) delivTypes.push(`${n}x ${label}`);
+  } else {
+    // Fall back to plain mentions
+    for (const { re, label } of MENTION_PATTERNS) {
+      if (re.test(text) && !delivTypes.includes(label)) delivTypes.push(label);
+    }
+  }
+
+  // --- dollar amount ---
+  let amount = null;
+  const dollarMatches = [...text.matchAll(/\$\s*([\d,]+(?:\.\d{1,2})?)\s*(?:USD|usd)?/g)];
+  if (dollarMatches.length > 0) {
+    // Take the largest plausible figure (avoids $0 or tiny numbers)
+    const nums = dollarMatches.map((m) => parseFloat(m[1].replace(/,/g, ""))).filter((n) => n >= 50);
+    if (nums.length > 0) amount = Math.max(...nums);
+  }
+
+  // --- assemble ---
+  const parts = [];
+  if (compType) parts.push(compType);
+  if (delivTypes.length > 0) parts.push(delivTypes.join(" + "));
+  if (amount) parts.push(`$${amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`);
+
+  if (parts.length === 0) return null;
+  return parts.join(" · ");
+}
+
+// Extract the most recent actionable next step from the last brand message.
+// Returns a short string like "Please share your rate card" or null.
+function extractNextStep(msgs, userEmail) {
+  if (!msgs || msgs.length === 0) return null;
+
+  // Find the last message NOT from the user (i.e. from the brand/agency)
+  let brandMsg = null;
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const from = parseFrom(getHeader(msgs[i], "From"));
+    if (!userEmail || from.email.toLowerCase() !== userEmail.toLowerCase()) {
+      brandMsg = msgs[i];
+      break;
+    }
+  }
+  if (!brandMsg) return null;
+
+  const body = getTextBody(brandMsg.payload);
+  if (!body) return null;
+
+  const text = body.slice(0, 3000);
+
+  // Sentence-level scan for action-request patterns
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const ACTION_RE = /\b(could you|can you|please|would you|let us know|let me know|kindly|we need|we'd love|we would love|waiting for|looking forward to hearing|share your|send us|send over|confirm|reply|respond|get back)\b/i;
+  const DEADLINE_RE = /\bby\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|\w+ \d+|end of (?:the )?(?:week|month|day)|\d{1,2}\/\d{1,2})\b/i;
+
+  for (const sentence of sentences) {
+    const s = sentence.trim();
+    if (s.length < 10 || s.length > 200) continue;
+    if (ACTION_RE.test(s)) {
+      // Clean up: strip leading/trailing junk, collapse whitespace
+      const clean = s.replace(/\s+/g, " ").replace(/^[^A-Za-z]+/, "").trim();
+      if (clean.length > 5) return clean.replace(/[.!?]+$/, "");
+    }
+  }
+
+  // Check for a deadline mention in the whole text even if no action sentence found
+  const deadlineMatch = text.match(DEADLINE_RE);
+  if (deadlineMatch) return `Deadline: ${deadlineMatch[0]}`;
+
+  return null;
+}
+
 const CLOSED_KEYWORDS = [
   "invoice", "invoiced", "payment received", "payment sent", "paid",
   "signed contract", "contract signed", "deal confirmed", "confirmed",
@@ -285,6 +404,8 @@ export default async function handler(req, res) {
       // Concatenate body text from all messages for brand extraction
       const allBodyText = msgs.map((m) => getTextBody(m.payload)).join("\n");
       const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject, allBodyText);
+      const offerSummary = extractOfferSummary(msgs);
+      const inferredNextStep = extractNextStep(msgs, userEmail);
       const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
@@ -299,7 +420,8 @@ export default async function handler(req, res) {
         contact,
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
-        offer: cleanedSubject,
+        offer: offerSummary || cleanedSubject,
+        inferredNextStep,
         theirRate: null,
         yourRate: null,
         status,

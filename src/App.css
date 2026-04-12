@@ -483,6 +483,7 @@ textarea { resize: vertical; }
 .next-step-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); flex-shrink: 0; }
 .next-step-text { font-size: 12.5px; font-weight: 600; color: var(--purple); }
 .next-step-done .next-step-text { color: var(--green); }
+.next-step-inferred .next-step-text { color: var(--text2); font-weight: 500; }
 .deliverable-progress { font-size: 11px; font-weight: 700; color: var(--text3); background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 2px 7px; margin-left: auto; flex-shrink: 0; }
 
 /* Expand button */
