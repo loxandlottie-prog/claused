@@ -34,14 +34,14 @@ function BrandLogo({ domain, logo, logoColor }) {
 }
 
 function getGmailUrl(thread, gmailEmail) {
-  const account = gmailEmail || "0";
+  const authuser = gmailEmail ? `?authuser=${encodeURIComponent(gmailEmail)}` : "";
   if (thread.source === "gmail" && thread.id) {
-    return `https://mail.google.com/mail/u/${account}/#all/${thread.id}`;
+    return `https://mail.google.com/mail/${authuser}#all/${thread.id}`;
   }
   if (thread.contact?.email) {
-    return `https://mail.google.com/mail/u/${account}/#search/from%3A${encodeURIComponent(thread.contact.email)}`;
+    return `https://mail.google.com/mail/${authuser}#search/from%3A${encodeURIComponent(thread.contact.email)}`;
   }
-  return `https://mail.google.com/mail/u/${account}/#search/${encodeURIComponent(thread.brand)}`;
+  return `https://mail.google.com/mail/${authuser}#search/${encodeURIComponent(thread.brand)}`;
 }
 
 function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
