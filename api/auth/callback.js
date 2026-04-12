@@ -1,5 +1,12 @@
+function getBase(req) {
+  if (process.env.BASE_URL) return process.env.BASE_URL;
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
 export default async function handler(req, res) {
-  const base = process.env.BASE_URL || "https://claused.co";
+  const base = getBase(req);
   const { code, error } = req.query;
 
   if (error || !code) {
