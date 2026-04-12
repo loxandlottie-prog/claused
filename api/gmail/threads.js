@@ -139,7 +139,17 @@ function toBrandInfo(contact, domain, subject, bodyText) {
   const teamMatch = name.match(/^([A-Z][A-Za-z0-9&]+(?:\s[A-Z][A-Za-z0-9&]+)?)\s+(?:team|partnerships|collab|brand)/i)?.[1];
   if (teamMatch) return { brand: teamMatch.trim(), senderIsAgency: false };
 
-  // 5. Fall back to sender domain — sender IS the brand
+  // 5. Sender display name is the brand when the local part is a role/department address.
+  //    e.g. "Open Farm" <reviews@yotpo.com> — "reviews" signals a platform sender, "Open Farm" is the brand.
+  const ROLE_LOCAL = /^(reviews?|social|collab|partnership|brand|marketing|hello|info|team|pr|press|media|campaigns?|creators?|influencers?|gifting|seeding|ambassador|sponsor|noreply|no-reply|hello|support)s?$/i;
+  const localPart2 = contact.email.split("@")[0];
+  if (ROLE_LOCAL.test(localPart2) && contact.name && contact.name.length >= 2) {
+    const domainWord = domain.split(".")[0].toLowerCase();
+    const isAgency = !contact.name.toLowerCase().replace(/\s+/g, "").includes(domainWord);
+    return { brand: contact.name.trim(), senderIsAgency: isAgency };
+  }
+
+  // 6. Fall back to sender domain — sender IS the brand
   const host = domain.replace(/^(mail\.|em\.|email\.|mg\.|send\.|news\.)/, "");
   const parts = host.split(".");
   const raw = parts.length > 2 ? parts[parts.length - 2] : parts[0];
@@ -388,8 +398,9 @@ export default async function handler(req, res) {
   const userEmail = userInfo.email || null;
 
   // Fetch each thread with headers + body parts (for brand extraction from body text)
-  // labelIds is included so inferStatus can detect SENT messages regardless of From address
-  const fields = "messages(id,snippet,labelIds,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
+  // labelIds: detect SENT messages regardless of From address/alias
+  // internalDate: server-assigned Unix ms timestamp — more reliable than the Date header
+  const fields = "messages(id,snippet,labelIds,internalDate,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
   const details = await Promise.all(
     threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
@@ -408,14 +419,20 @@ export default async function handler(req, res) {
   const parsed = details
     .filter(Boolean)
     .map((thread) => {
-      const msgs = thread.messages || [];
+      // Sort by internalDate (server-assigned ms timestamp) to guarantee chronological order.
+      // The Gmail API usually returns messages oldest-first, but sent messages can appear
+      // out of order relative to received messages when Date headers differ.
+      const msgs = (thread.messages || []).sort(
+        (a, b) => parseInt(a.internalDate || 0) - parseInt(b.internalDate || 0)
+      );
       const first = msgs[0];
       const last = msgs[msgs.length - 1];
 
       const fromRaw = getHeader(first, "From");
       const subject = getHeader(first, "Subject");
-      const firstDate = getHeader(first, "Date");
-      const lastDate = getHeader(last, "Date");
+      // Use internalDate (ms) when available; fall back to Date header
+      const firstDate = first.internalDate ? new Date(parseInt(first.internalDate)).toISOString() : getHeader(first, "Date");
+      const lastDate  = last.internalDate  ? new Date(parseInt(last.internalDate)).toISOString()  : getHeader(last,  "Date");
 
       const contact = parseFrom(fromRaw);
       const domain = contact.email.split("@")[1] || "";
