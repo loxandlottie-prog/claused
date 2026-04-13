@@ -11,9 +11,20 @@ const OVERRIDES_KEY = "inbora_overrides";
 const brandKey = (brand) =>
   (brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
 
+const STATUS_MIGRATION = {
+  reply_needed: "active", you_replied: "active", waiting_on_them: "active",
+  in_progress: "accepted", deal_closed: "closed", deal_passed: "rejected",
+};
+
 const getOverrides = () => {
-  try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}"); }
-  catch { return {}; }
+  try {
+    const raw = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
+    // Migrate old status values to new simplified statuses
+    Object.values(raw).forEach((ov) => {
+      if (ov.status && STATUS_MIGRATION[ov.status]) ov.status = STATUS_MIGRATION[ov.status];
+    });
+    return raw;
+  } catch { return {}; }
 };
 
 const saveOverride = (key, updates) => {

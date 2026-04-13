@@ -232,31 +232,9 @@ function inferStatus(msgs, lastMsg, userEmail) {
   const allText = subject + " " + snippet;
 
   // Closed if strong deal-completion signals
-  if (CLOSED_KEYWORDS.some((kw) => allText.includes(kw))) return "deal_closed";
+  if (CLOSED_KEYWORDS.some((kw) => allText.includes(kw))) return "closed";
 
-  // Determine who sent the last message.
-  // Primary signal: SENT label (reliable regardless of alias/from address).
-  // Fallback: compare From address to userEmail.
-  const lastLabels = last.labelIds || [];
-  const weSentLast =
-    lastLabels.includes("SENT") ||
-    (userEmail
-      ? parseFrom(getHeader(last, "From")).email.toLowerCase() === userEmail.toLowerCase()
-      : false);
-
-  if (weSentLast) return "waiting_on_them";
-
-  // Brand sent the last message.
-  // Only "reply_needed" if we have never replied at all (no SENT message anywhere in thread).
-  const everReplied = msgs.some((m) => {
-    const labels = m.labelIds || [];
-    if (labels.includes("SENT")) return true;
-    if (userEmail) {
-      return parseFrom(getHeader(m, "From")).email.toLowerCase() === userEmail.toLowerCase();
-    }
-    return false;
-  });
-  return everReplied ? "you_replied" : "reply_needed";
+  return "active";
 }
 
 export default async function handler(req, res) {
