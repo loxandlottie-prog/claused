@@ -47,7 +47,7 @@ function priorityScore(t) {
   }
 }
 
-export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
+export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
   const [filter, setFilter] = useState("all");
   const [year, setYear] = useState("all");
 
@@ -80,7 +80,7 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
   const closedDeals    = sorted.filter((t) => t.status === "deal_closed");
   const rejectedDeals  = sorted.filter((t) => t.status === "deal_passed");
 
-  const cardProps = { onStatusChange, onDeliverableToggle, onDeliverableAdd, gmailEmail };
+  const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail };
 
   if (threads.length === 0) {
     return (

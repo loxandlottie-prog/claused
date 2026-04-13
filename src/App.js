@@ -101,6 +101,23 @@ export default function App() {
     setThreads((prev) => [thread, ...prev]);
   };
 
+  const handleFieldChange = (id, updates) => {
+    setThreads((prev) => {
+      const next = prev.map((t) => {
+        if (t.id !== id) return t;
+        // Deep merge contact if updating contact fields
+        if (updates.contact) return { ...t, contact: { ...t.contact, ...updates.contact } };
+        return { ...t, ...updates };
+      });
+      const changed = next.find((t) => t.id === id);
+      if (changed) {
+        const key = brandKey(changed.brand);
+        if (key) saveOverride(key, updates);
+      }
+      return next;
+    });
+  };
+
   const handleDeliverableToggle = (threadId, deliverableId) => {
     setThreads((prev) => {
       const next = prev.map((t) => {
@@ -187,6 +204,7 @@ export default function App() {
           <HomeTab
             threads={threads}
             onStatusChange={handleStatusChange}
+            onFieldChange={handleFieldChange}
             onThreadAdd={handleThreadAdd}
             onDeliverableToggle={handleDeliverableToggle}
             onDeliverableAdd={handleDeliverableAdd}

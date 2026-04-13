@@ -34,15 +34,87 @@ function BrandLogo({ domain, logo, logoColor }) {
   );
 }
 
-function getGmailUrl(thread, gmailEmail) {
+function EditableText({ value, onSave, className, placeholder = "Add...", multiline = false, type = "text" }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const start = (e) => { e.stopPropagation(); setDraft(value || ""); setEditing(true); };
+  const save = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed !== (value || "").trim()) onSave(trimmed || null);
+  };
+  const cancel = () => setEditing(false);
+
+  if (editing) {
+    const sharedProps = {
+      value: draft,
+      onChange: (e) => setDraft(e.target.value),
+      onBlur: save,
+      autoFocus: true,
+      onClick: (e) => e.stopPropagation(),
+      className: `edit-field ${multiline ? "edit-field-multi" : ""}`,
+    };
+    return multiline
+      ? <textarea {...sharedProps} rows={3} onKeyDown={(e) => e.key === "Escape" && cancel()} />
+      : <input {...sharedProps} type={type} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }} />;
+  }
+
+  return (
+    <span className={`editable-hover ${className || ""}`} onClick={start} title="Click to edit">
+      {value != null && value !== "" ? value : <em className="field-empty">{placeholder}</em>}
+    </span>
+  );
+}
+
+function EditableRate({ value, onSave, label, className }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const start = (e) => { e.stopPropagation(); setDraft(value != null ? String(value) : ""); setEditing(true); };
+  const save = () => {
+    setEditing(false);
+    const n = parseFloat(String(draft).replace(/[$,]/g, ""));
+    onSave(isNaN(n) ? null : n);
+  };
+  const cancel = () => setEditing(false);
+
+  if (editing) {
+    return (
+      <span className={`${className} rate-chip-editing`} onClick={(e) => e.stopPropagation()}>
+        <span className="rate-chip-label">{label}:</span>
+        <input
+          className="edit-field edit-field-rate"
+          type="number"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
+          autoFocus
+          placeholder="0"
+        />
+      </span>
+    );
+  }
+
+  if (value == null) {
+    return (
+      <span className={`${className} rate-chip-add editable-hover`} onClick={start} title="Click to set">
+        + {label}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`${className} editable-hover`} onClick={start} title="Click to edit">
+      {label}: {formatCurrency(value)}
+    </span>
+  );
+}
+
+function getGmailUrl(threadId, gmailEmail) {
   const authuser = gmailEmail ? `?authuser=${encodeURIComponent(gmailEmail)}` : "";
-  if (thread.source === "gmail" && thread.id) {
-    return `https://mail.google.com/mail/${authuser}#all/${thread.id}`;
-  }
-  if (thread.contact?.email) {
-    return `https://mail.google.com/mail/${authuser}#search/from%3A${encodeURIComponent(thread.contact.email)}`;
-  }
-  return `https://mail.google.com/mail/${authuser}#search/${encodeURIComponent(thread.brand)}`;
+  return `https://mail.google.com/mail/${authuser}#all/${threadId}`;
 }
 
 function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
@@ -57,7 +129,7 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
 
   return (
     <div className="deliverables-section">
-      <div className="deliverables-title">Deliverables</div>
+      <div className="deliverables-title">Tasks</div>
       <div className="deliverables-list">
         {deliverables.map((d) => (
           <label key={d.id} className={`deliverable-item ${d.done ? "deliverable-done" : ""}`}>
@@ -75,7 +147,7 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
         <input
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
-          placeholder="Add a deliverable..."
+          placeholder="Add a task..."
           className="deliverable-add-input"
         />
         <button type="submit" className="deliverable-add-btn">Add</button>
@@ -84,7 +156,7 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
   );
 }
 
-export default function BrandCard({ thread, onStatusChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
+export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -92,12 +164,16 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
   const since = daysSince(thread.lastMessage);
   const s = STATUS[thread.status];
   const deliverables = thread.deliverables || [];
+  const subThreads = thread.subThreads || [];
   const doneCount = deliverables.filter((d) => d.done).length;
   const nextStep = deliverables.find((d) => !d.done);
   const hasDeliverables = deliverables.length > 0;
 
   const websiteUrl = thread.domain ? `https://www.${thread.domain}` : null;
-  const gmailUrl = getGmailUrl(thread, gmailEmail);
+  const gmailUrl = getGmailUrl(thread.id, gmailEmail);
+
+  const save = (field, value) => onFieldChange(thread.id, { [field]: value });
+  const saveContact = (field, value) => onFieldChange(thread.id, { contact: { ...thread.contact, [field]: value } });
 
   return (
     <div className="brand-card">
@@ -107,7 +183,12 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
         <div className="brand-info">
           <div className="brand-top-row">
             <div className="brand-name-group">
-              <span className="brand-name">{thread.brand}</span>
+              <EditableText
+                value={thread.brand}
+                onSave={(v) => save("brand", v)}
+                className="brand-name"
+                placeholder="Brand name"
+              />
               {websiteUrl && (
                 <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
                   className="brand-website-link" onClick={(e) => e.stopPropagation()}>
@@ -162,25 +243,39 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
           </div>
 
           <div className="brand-contact">
-            {thread.contact.name && <span>{thread.contact.name}</span>}
-            {thread.contact.name && thread.contact.email && <span className="contact-sep">·</span>}
-            {thread.contact.email && <span className="contact-email">{thread.contact.email}</span>}
+            <EditableText
+              value={thread.contact?.name}
+              onSave={(v) => saveContact("name", v)}
+              placeholder="Contact name"
+            />
+            {thread.contact?.name && <span className="contact-sep">·</span>}
+            <EditableText
+              value={thread.contact?.email}
+              onSave={(v) => saveContact("email", v)}
+              className="contact-email"
+              placeholder="email@example.com"
+              type="email"
+            />
           </div>
 
-          {thread.product && (
-            <div className="brand-product">
-              <span className="brand-product-label">Product</span>
-              <span className="brand-product-name">{thread.product}</span>
-            </div>
-          )}
+          <div className="brand-offer">
+            <EditableText
+              value={thread.offer}
+              onSave={(v) => save("offer", v)}
+              placeholder="Describe the deal..."
+            />
+          </div>
 
-          <div className="brand-offer">{thread.offer || <span className="muted">No offer details</span>}</div>
+          <div className="brand-notes-row">
+            <EditableText
+              value={thread.notes}
+              onSave={(v) => save("notes", v)}
+              className="brand-notes-text"
+              placeholder="Add notes..."
+              multiline
+            />
+          </div>
 
-          {thread.notes && (
-            <div className="brand-notes">{thread.notes}</div>
-          )}
-
-          {/* Next step chip — shown on card face */}
           {nextStep && (
             <div className="next-step-row">
               <span className="next-step-label">Next</span>
@@ -192,7 +287,7 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
           )}
           {hasDeliverables && !nextStep && (
             <div className="next-step-row next-step-done">
-              <span className="next-step-label">Deliverables</span>
+              <span className="next-step-label">Tasks</span>
               <span className="next-step-text">All done ✓</span>
               <span className="deliverable-progress">{doneCount}/{deliverables.length}</span>
             </div>
@@ -201,15 +296,28 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
           <div className="brand-meta-row">
             <div className="brand-rates">
               {thread.theirRate === "product" ? (
-                <span className="rate-chip rate-product">Product only</span>
-              ) : thread.theirRate ? (
-                <span className="rate-chip rate-their">Their rate: {formatCurrency(thread.theirRate)}</span>
-              ) : null}
-              {thread.yourRate && (
-                <span className="rate-chip rate-yours">Your rate: {formatCurrency(thread.yourRate)}</span>
+                <span className="rate-chip rate-product editable-hover" onClick={(e) => { e.stopPropagation(); save("theirRate", null); }} title="Click to clear">Product only</span>
+              ) : (
+                <EditableRate
+                  value={thread.theirRate}
+                  onSave={(v) => save("theirRate", v)}
+                  label="Their rate"
+                  className="rate-chip rate-their"
+                />
               )}
-              {thread.status === "deal_closed" && thread.revenue && (
-                <span className="rate-chip rate-closed">Closed: {formatCurrency(thread.revenue)}</span>
+              <EditableRate
+                value={thread.yourRate}
+                onSave={(v) => save("yourRate", v)}
+                label="Your rate"
+                className="rate-chip rate-yours"
+              />
+              {thread.status === "deal_closed" && (
+                <EditableRate
+                  value={thread.revenue}
+                  onSave={(v) => save("revenue", v)}
+                  label="Closed"
+                  className="rate-chip rate-closed"
+                />
               )}
             </div>
             <div className="brand-dates-row">
@@ -243,7 +351,7 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
                   className="expand-btn"
                   onClick={() => setExpanded((v) => !v)}
                 >
-                  {expanded ? "▲ Hide tasks" : `▾ Tasks${hasDeliverables ? ` (${deliverables.length})` : ""}`}
+                  {expanded ? "▲ Hide" : `▾ ${hasDeliverables ? `Tasks (${deliverables.length})` : subThreads.length > 0 ? `${subThreads.length + 1} threads` : "Tasks"}`}
                 </button>
               </div>
             </div>
@@ -259,6 +367,26 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
             onToggle={onDeliverableToggle}
             onAdd={onDeliverableAdd}
           />
+          {subThreads.length > 0 && (
+            <div className="sub-threads-section">
+              <div className="deliverables-title">Other threads</div>
+              {[{ id: thread.id, offer: thread.offer, lastMessage: thread.lastMessage, contact: thread.contact }, ...subThreads].map((st) => (
+                <div key={st.id} className="sub-thread-row">
+                  <span className="sub-thread-subject">{st.offer || "(no subject)"}</span>
+                  <span className="sub-thread-date">{fmtDate(st.lastMessage)}</span>
+                  <a
+                    href={getGmailUrl(st.id, gmailEmail)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sub-thread-link"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ↗
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

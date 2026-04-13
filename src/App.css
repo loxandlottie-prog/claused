@@ -545,6 +545,40 @@ textarea { resize: vertical; }
 .expand-btn:hover { color: var(--purple); }
 
 /* Expanded deliverables panel */
+/* Inline editing */
+.editable-hover { cursor: text; border-radius: 4px; transition: background 0.1s; }
+.editable-hover:hover { background: var(--bg); outline: 1px dashed var(--border2); }
+.field-empty { font-style: italic; color: var(--text3); font-size: 0.9em; }
+.edit-field {
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--text1);
+  background: var(--surface);
+  border: 1.5px solid var(--purple-mid);
+  border-radius: 5px;
+  padding: 2px 6px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.edit-field:focus { border-color: var(--purple); box-shadow: 0 0 0 2px var(--purple-light); }
+.edit-field-multi { resize: vertical; min-height: 56px; display: block; }
+.edit-field-rate { width: 90px; }
+.rate-chip-editing { display: inline-flex; align-items: center; gap: 4px; }
+.rate-chip-label { font-size: 11px; font-weight: 600; color: var(--text3); }
+.rate-chip-add { opacity: 0.5; font-size: 11.5px; cursor: pointer; }
+.rate-chip-add:hover { opacity: 1; }
+.brand-notes-row { margin-top: 3px; }
+.brand-notes-text { font-size: 12.5px; color: var(--text3); font-style: italic; display: block; width: 100%; }
+
+/* Sub-threads in expanded section */
+.sub-threads-section { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.sub-thread-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+.sub-thread-subject { font-size: 12.5px; color: var(--text2); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub-thread-date { font-size: 11.5px; color: var(--text3); flex-shrink: 0; }
+.sub-thread-link { font-size: 12px; color: var(--purple); flex-shrink: 0; text-decoration: none; }
+.sub-thread-link:hover { text-decoration: underline; }
+
 .brand-card-expanded { border-top: 1px solid var(--border); padding: 14px 16px; background: var(--bg); border-radius: 0 0 var(--radius) var(--radius); }
 .deliverables-section { display: flex; flex-direction: column; gap: 10px; }
 .deliverables-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); }

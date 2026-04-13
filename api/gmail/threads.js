@@ -190,6 +190,11 @@ const SKIP_DOMAINS = new Set([
   // Other high-volume automated platforms
   "substack.com", "beehiiv.com", "convertkit.com", "mailchimp.com",
   "constantcontact.com", "klaviyo.com", "sendgrid.net", "mailgun.org",
+  // Review / loyalty / creator-tool platforms — not brand-deal senders
+  "yotpo.com", "stamped.io", "okendo.io", "loox.io", "junip.co",
+  "beacons.ai", "hello.beacons.ai", "linktree.com",
+  // Adobe marketing emails
+  "e.adobe.com", "adobe.com",
 ]);
 // Also skip local-parts that look like automated/bulk senders:
 // covers: store-news, noreply-store, order-updates, digest-weekly, etc.
@@ -387,7 +392,7 @@ export default async function handler(req, res) {
   for (const t of parsed) {
     const key = t.brand.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
     if (!grouped[key]) {
-      grouped[key] = { ...t };
+      grouped[key] = { ...t, subThreads: [] };
     } else {
       const g = grouped[key];
       // Earliest first contact
@@ -396,11 +401,15 @@ export default async function handler(req, res) {
       // Status must follow the most recent thread — an old OOO or stale thread
       // must never override the status of a more recent exchange.
       if (t.lastMessage > g.lastMessage) {
+        // Current main thread becomes a sub-thread
+        g.subThreads.push({ id: g.id, offer: g.offer, lastMessage: g.lastMessage, contact: g.contact });
         g.lastMessage = t.lastMessage;
         g.id = t.id;
         g.contact = t.contact;
         g.offer = t.offer;
         g.status = t.status;
+      } else {
+        g.subThreads.push({ id: t.id, offer: t.offer, lastMessage: t.lastMessage, contact: t.contact });
       }
       g.messageCount = (g.messageCount || 1) + (t.messageCount || 1);
     }
