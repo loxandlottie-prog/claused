@@ -304,6 +304,53 @@ export default async function handler(req, res) {
     )
   );
 
+  // Gmail often omits internalDate for SENT messages in the threads endpoint.
+  // For threads whose last message has no timestamp, fetch that message individually
+  // via the messages endpoint which reliably returns internalDate for all message types.
+  const missingTsmsgs = details
+    .filter(Boolean)
+    .flatMap((thread) => {
+      const msgs = thread.messages || [];
+      const last = msgs[msgs.length - 1];
+      if (!last) return [];
+      const ts = parseInt(last.internalDate || 0);
+      if (ts > 0) return [];
+      // Also check Date header fallback before adding to supplement list
+      const dateVal = (last?.payload?.headers || []).find(
+        (h) => h.name.toLowerCase() === "date"
+      )?.value || "";
+      const dateTs = dateVal ? new Date(dateVal).getTime() : 0;
+      if (dateTs > 0) return [];
+      return [last.id];
+    });
+
+  // Build a msgId → internalDate map from supplemental fetches
+  const supplementalTs = {};
+  if (missingTsmsgs.length > 0) {
+    const fetched = await Promise.all(
+      missingTsmsgs.map((msgId) =>
+        gmailFetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgId}?format=METADATA&metadataHeaders=Date`
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      )
+    );
+    fetched.forEach((msg) => {
+      if (!msg) return;
+      const ts = parseInt(msg.internalDate || 0);
+      if (ts > 0) { supplementalTs[msg.id] = ts; return; }
+      // Fallback: try Date header from metadata response
+      const dateVal = (msg?.payload?.headers || []).find(
+        (h) => h.name.toLowerCase() === "date"
+      )?.value || "";
+      if (dateVal) {
+        const t = new Date(dateVal).getTime();
+        if (t > 0) supplementalTs[msg.id] = t;
+      }
+    });
+  }
+
   const colors = [
     "#7C5CFC","#F59E0B","#10B981","#3B82F6","#EF4444",
     "#EC4899","#8B5CF6","#0EA5E9","#F97316","#14B8A6",
@@ -328,6 +375,8 @@ export default async function handler(req, res) {
       const msgTs = (m) => {
         const id = parseInt(m.internalDate || 0);
         if (id > 0) return id;
+        // Check supplemental timestamps fetched individually for SENT messages
+        if (m.id && supplementalTs[m.id]) return supplementalTs[m.id];
         try { const t = new Date(getHeader(m, "Date")).getTime(); if (t > 0) return t; } catch {}
         return 0;
       };
