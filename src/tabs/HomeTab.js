@@ -1,18 +1,56 @@
 import React, { useState } from "react";
 import BrandCard from "../components/BrandCard";
+import { daysSince } from "../utils";
 
 const FILTERS = [
   { key: "all",             label: "All" },
-  { key: "reply_needed",    label: "Action required" },
+  { key: "in_progress",    label: "Active" },
+  { key: "reply_needed",   label: "Action required" },
   { key: "waiting_on_them", label: "Waiting on them" },
-  { key: "deal_closed",     label: "Closed" },
+  { key: "deal_closed",    label: "Closed" },
+  { key: "deal_passed",    label: "Rejected" },
 ];
+
+// Lower score = shown first.
+// in_progress always tops, then reply_needed, then active, then stale.
+function priorityScore(t) {
+  const days = daysSince(t.lastMessage);
+
+  const value =
+    (typeof t.revenue === "number" && t.revenue > 0 ? t.revenue : 0) ||
+    (typeof t.yourRate === "number" && t.yourRate > 0 ? t.yourRate : 0) ||
+    (typeof t.theirRate === "number" && t.theirRate > 0 ? t.theirRate : 0);
+
+  const valueBoost = Math.min(500, value / 10);
+  const stalePenalty = days > 21 ? Math.min(300, (days - 21) * 4) : 0;
+
+  switch (t.status) {
+    case "in_progress":
+      // Accepted deals always first, sorted by value
+      return -1000 - valueBoost;
+
+    case "reply_needed":
+      return 0 + Math.max(0, days * 2);
+
+    case "you_replied":
+    case "waiting_on_them":
+      return 1000 - valueBoost + stalePenalty;
+
+    case "deal_closed":
+      return 9000;
+
+    case "deal_passed":
+      return 9500;
+
+    default:
+      return 5000 + stalePenalty;
+  }
+}
 
 export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
   const [filter, setFilter] = useState("all");
   const [year, setYear] = useState("all");
 
-  // Derive sorted unique years from thread dates
   const years = [...new Set(threads.map((t) => t.firstReached.slice(0, 4)))]
     .sort((a, b) => b - a);
 
@@ -20,6 +58,7 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
     ? threads
     : threads.filter((t) => t.firstReached.startsWith(year));
 
+  const activeCount  = yearFiltered.filter((t) => t.status === "in_progress").length;
   const replyCount   = yearFiltered.filter((t) => t.status === "reply_needed").length;
   const waitingCount = yearFiltered.filter((t) => t.status === "waiting_on_them" || t.status === "you_replied").length;
   const closedCount  = yearFiltered.filter((t) => t.status === "deal_closed").length;
@@ -30,10 +69,18 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
     return t.status === filter;
   });
 
-  // Open deals first, then closed, then passed at the very bottom
-  const openDeals   = filtered.filter((t) => t.status !== "deal_closed" && t.status !== "deal_passed");
-  const closedDeals = filtered.filter((t) => t.status === "deal_closed");
-  const passedDeals = filtered.filter((t) => t.status === "deal_passed");
+  const sorted = [...filtered].sort((a, b) => priorityScore(a) - priorityScore(b));
+
+  // Section groups for "all" view
+  const STALE_DAYS = 21;
+  const activeDeals    = sorted.filter((t) => t.status === "in_progress");
+  const needsAttention = sorted.filter((t) => t.status === "reply_needed");
+  const inPlay         = sorted.filter((t) => t.status !== "in_progress" && t.status !== "reply_needed" && t.status !== "deal_closed" && t.status !== "deal_passed" && daysSince(t.lastMessage) <= STALE_DAYS);
+  const goneQuiet      = sorted.filter((t) => t.status !== "in_progress" && t.status !== "reply_needed" && t.status !== "deal_closed" && t.status !== "deal_passed" && daysSince(t.lastMessage) > STALE_DAYS);
+  const closedDeals    = sorted.filter((t) => t.status === "deal_closed");
+  const rejectedDeals  = sorted.filter((t) => t.status === "deal_passed");
+
+  const cardProps = { onStatusChange, onDeliverableToggle, onDeliverableAdd, gmailEmail };
 
   if (threads.length === 0) {
     return (
@@ -63,6 +110,10 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
           <span className="stat-value">{waitingCount}</span>
         </div>
         <div className="stat-card">
+          <span className="stat-label">Active deals</span>
+          <span className={`stat-value ${activeCount > 0 ? "stat-value-green" : ""}`}>{activeCount}</span>
+        </div>
+        <div className="stat-card">
           <span className="stat-label">Deals closed</span>
           <span className="stat-value stat-value-green">{closedCount}</span>
         </div>
@@ -78,6 +129,9 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
             {f.label}
             {f.key === "reply_needed" && replyCount > 0 && (
               <span className="filter-count-badge">{replyCount}</span>
+            )}
+            {f.key === "in_progress" && activeCount > 0 && (
+              <span className="filter-count-badge filter-count-green">{activeCount}</span>
             )}
           </button>
         ))}
@@ -104,28 +158,61 @@ export default function HomeTab({ threads, onStatusChange, onDeliverableToggle, 
       <div className="thread-list">
         {filtered.length === 0 ? (
           <div className="empty-state">No brands match this filter.</div>
+        ) : filter !== "all" ? (
+          sorted.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)
         ) : (
           <>
-            {openDeals.map((t) => (
-              <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
-                onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
-            ))}
-            {closedDeals.length > 0 && (
+            {activeDeals.length > 0 && (
               <>
-                <div className="closed-divider"><span>Closed deals ({closedDeals.length})</span></div>
-                {closedDeals.map((t) => (
-                  <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
-                    onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
-                ))}
+                <div className="section-header section-header-active">
+                  Active <span className="section-count section-count-active">{activeDeals.length}</span>
+                </div>
+                {activeDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-            {passedDeals.length > 0 && (
+
+            {needsAttention.length > 0 && (
               <>
-                <div className="closed-divider closed-divider-passed"><span>Passed ({passedDeals.length})</span></div>
-                {passedDeals.map((t) => (
-                  <BrandCard key={t.id} thread={t} onStatusChange={onStatusChange}
-                    onDeliverableToggle={onDeliverableToggle} onDeliverableAdd={onDeliverableAdd} gmailEmail={gmailEmail} />
-                ))}
+                <div className="section-header section-header-urgent">
+                  Needs your reply <span className="section-count">{needsAttention.length}</span>
+                </div>
+                {needsAttention.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+
+            {inPlay.length > 0 && (
+              <>
+                <div className="section-header">
+                  In play <span className="section-count">{inPlay.length}</span>
+                </div>
+                {inPlay.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+
+            {goneQuiet.length > 0 && (
+              <>
+                <div className="section-header section-header-muted">
+                  Gone quiet <span className="section-count">{goneQuiet.length}</span>
+                </div>
+                {goneQuiet.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+
+            {closedDeals.length > 0 && (
+              <>
+                <div className="section-header section-header-muted">
+                  Closed <span className="section-count">{closedDeals.length}</span>
+                </div>
+                {closedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+
+            {rejectedDeals.length > 0 && (
+              <>
+                <div className="section-header section-header-muted">
+                  Rejected <span className="section-count">{rejectedDeals.length}</span>
+                </div>
+                {rejectedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
           </>

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
-  reply_needed:    { label: "Reply needed",    cls: "status-red"    },
-  you_replied:     { label: "You replied",     cls: "status-blue"   },
-  waiting_on_them: { label: "Waiting on them", cls: "status-yellow" },
-  in_progress:     { label: "In progress",     cls: "status-teal"   },
-  deal_closed:     { label: "Deal closed",     cls: "status-green"  },
-  deal_passed:     { label: "Passed",          cls: "status-gray"   },
+  reply_needed:    { label: "Reply needed",      cls: "status-red"    },
+  you_replied:     { label: "Replied",           cls: "status-blue"   },
+  waiting_on_them: { label: "Waiting on them",   cls: "status-yellow" },
+  in_progress:     { label: "In progress",       cls: "status-teal"   },
+  deal_closed:     { label: "Closed",            cls: "status-green"  },
+  deal_passed:     { label: "Passed",            cls: "status-gray"   },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -90,7 +90,6 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
   const [expanded, setExpanded] = useState(false);
 
   const since = daysSince(thread.lastMessage);
-  const followUp = since >= 14 && thread.status !== "deal_closed";
   const s = STATUS[thread.status];
   const deliverables = thread.deliverables || [];
   const doneCount = deliverables.filter((d) => d.done).length;
@@ -101,11 +100,7 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
   const gmailUrl = getGmailUrl(thread, gmailEmail);
 
   return (
-    <div className={`brand-card ${followUp ? "brand-card-followup" : ""}`}>
-      {followUp && (
-        <div className="followup-flag">⏰ Follow up — silent for {since}d</div>
-      )}
-
+    <div className="brand-card">
       <div className="brand-card-main">
         <BrandLogo domain={thread.domain} logo={thread.logo} logoColor={thread.logoColor} />
 
@@ -225,12 +220,32 @@ export default function BrandCard({ thread, onStatusChange, onDeliverableToggle,
                   Last message {since === 0 ? "today" : since === 1 ? "yesterday" : `${since}d ago`}
                 </span>
               </div>
-              <button
-                className="expand-btn"
-                onClick={() => setExpanded((v) => !v)}
-              >
-                {expanded ? "▲ Hide tasks" : `▾ Tasks${hasDeliverables ? ` (${deliverables.length})` : ""}`}
-              </button>
+              <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
+                {!["in_progress", "deal_closed", "deal_passed"].includes(thread.status) && (
+                  <>
+                    <button
+                      className="card-action-btn card-action-accept"
+                      onClick={() => onStatusChange(thread.id, "in_progress")}
+                      title="Accept deal"
+                    >
+                      ✓ Accept
+                    </button>
+                    <button
+                      className="card-action-btn card-action-reject"
+                      onClick={() => onStatusChange(thread.id, "deal_passed")}
+                      title="Reject deal"
+                    >
+                      ✕ Reject
+                    </button>
+                  </>
+                )}
+                <button
+                  className="expand-btn"
+                  onClick={() => setExpanded((v) => !v)}
+                >
+                  {expanded ? "▲ Hide tasks" : `▾ Tasks${hasDeliverables ? ` (${deliverables.length})` : ""}`}
+                </button>
+              </div>
             </div>
           </div>
         </div>

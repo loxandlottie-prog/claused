@@ -109,17 +109,28 @@ function guessBrandDomain(brandName) {
   return brandName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "") + ".com";
 }
 
+// Convert ALL-CAPS brand names to Title Case ("CATTASAURUS" → "Cattasaurus")
+function normalizeBrandName(name) {
+  if (!name) return name;
+  if (name === name.toUpperCase() && name.length > 2) {
+    return name.charAt(0) + name.slice(1).toLowerCase();
+  }
+  return name;
+}
+
 // Returns { brand, senderIsAgency }
 // senderIsAgency = true when brand was inferred from subject/body (sender ≠ brand)
 function toBrandInfo(contact, domain, subject, bodyText) {
   const clean = stripSubjectPrefixes(subject);
 
   // 1. Subject: "Brand x Creator ..." or "Brand Campaign/Partnership/..."
+  // No ^ anchor — brand name may appear anywhere in the subject
+  // (e.g. "Collaboration Proposal: CATTASAURUS x Lox and Latke")
   if (clean) {
-    const xMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
-    if (xMatch) return { brand: xMatch[1].trim(), senderIsAgency: true };
-    const labelMatch = clean.match(/^([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
-    if (labelMatch) return { brand: labelMatch[1].trim(), senderIsAgency: true };
+    const xMatch = clean.match(/\b([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
+    if (xMatch) return { brand: normalizeBrandName(xMatch[1].trim()), senderIsAgency: true };
+    const labelMatch = clean.match(/\b([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
+    if (labelMatch) return { brand: normalizeBrandName(labelMatch[1].trim()), senderIsAgency: true };
   }
 
   // 2. Email body — scan all message bodies for brand mention patterns
@@ -161,84 +172,6 @@ function toISODate(raw) {
   catch { return new Date().toISOString().slice(0, 10); }
 }
 
-// Build a concise deal summary from all message bodies.
-// Examples: "Paid · 4x Reels + 2x Stories · $9,200"  /  "Gifted product · TikTok + Stories"  /  "Affiliate program"
-function extractOfferSummary(msgs) {
-  const bodies = msgs.map((m) => getTextBody(m.payload)).join("\n");
-  if (!bodies.trim()) return null;
-
-  const text = bodies.slice(0, 8000);
-
-  // --- compensation type ---
-  let compType = null;
-  if (/\bgifted\b|\bproduct seeding\b|\bsend you\b/i.test(text) && !/\bpaid\b|\bcompensation\b|\bbudget\b|\brate\b|\bfee\b/i.test(text)) {
-    compType = "Gifted product";
-  } else if (/\baffiliate\b/i.test(text)) {
-    compType = "Affiliate";
-  } else if (/\bpaid\b|\bsponsored\b|\bcompensation\b|\bbudget\b|\brate\b|\bfee\b/i.test(text)) {
-    compType = "Paid";
-  } else if (/\bambassador\b/i.test(text)) {
-    compType = "Ambassador";
-  }
-
-  // --- deliverable types (with counts where possible) ---
-  const delivTypes = [];
-  // Match patterns like "2 Reels", "4x TikTok", "one Instagram Story", etc.
-  const DELIV_PATTERNS = [
-    { re: /(\d+)\s*[x×]?\s*(?:instagram\s+)?reels?/gi, label: "Reel" },
-    { re: /(\d+)\s*[x×]?\s*(?:instagram\s+)?stor(?:y|ies)/gi, label: "Story" },
-    { re: /(\d+)\s*[x×]?\s*tiktok\s+(?:video|post)?s?/gi, label: "TikTok" },
-    { re: /(\d+)\s*[x×]?\s*youtube\s+(?:video|short)?s?/gi, label: "YouTube" },
-    { re: /(\d+)\s*[x×]?\s*(?:static\s+)?posts?/gi, label: "Post" },
-  ];
-  // Also catch mentions without counts
-  const MENTION_PATTERNS = [
-    { re: /\breels?\b/i, label: "Reels" },
-    { re: /\bstori(?:es|y)\b/i, label: "Stories" },
-    { re: /\btiktok\b/i, label: "TikTok" },
-    { re: /\byoutube\b/i, label: "YouTube" },
-    { re: /\bstatic\s+post\b/i, label: "Static post" },
-  ];
-
-  const counted = new Map(); // label → max count seen
-  for (const { re, label } of DELIV_PATTERNS) {
-    let m;
-    re.lastIndex = 0;
-    while ((m = re.exec(text)) !== null) {
-      const n = parseInt(m[1], 10);
-      if (!counted.has(label) || n > counted.get(label)) counted.set(label, n);
-    }
-  }
-  if (counted.size > 0) {
-    for (const [label, n] of counted) delivTypes.push(`${n}x ${label}`);
-  } else {
-    // Fall back to plain mentions
-    for (const { re, label } of MENTION_PATTERNS) {
-      if (re.test(text) && !delivTypes.includes(label)) delivTypes.push(label);
-    }
-  }
-
-  // --- dollar amount ---
-  let amount = null;
-  const dollarMatches = [...text.matchAll(/\$\s*([\d,]+(?:\.\d{1,2})?)\s*(?:USD|usd)?/g)];
-  if (dollarMatches.length > 0) {
-    // Take the largest plausible figure (avoids $0 or tiny numbers)
-    const nums = dollarMatches.map((m) => parseFloat(m[1].replace(/,/g, ""))).filter((n) => n >= 50);
-    if (nums.length > 0) amount = Math.max(...nums);
-  }
-
-  // --- assemble ---
-  const parts = [];
-  if (compType) parts.push(compType);
-  if (delivTypes.length > 0) parts.push(delivTypes.join(" + "));
-  if (amount) parts.push(`$${amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`);
-
-  if (parts.length === 0) return null;
-  return parts.join(" · ");
-}
-
-// Extract the most recent actionable next step from the last brand message.
-// Returns a short string like "Please share your rate card" or null.
 
 const CLOSED_KEYWORDS = [
   "invoice", "invoiced", "payment received", "payment sent", "paid",
@@ -286,9 +219,9 @@ const BRAND_QUERY = [
   '"usage rights"', '"exclusivity"',
 ].join(" OR ");
 
-function inferStatus(msgs, userEmail) {
+function inferStatus(msgs, lastMsg, userEmail) {
   const first = msgs[0];
-  const last = msgs[msgs.length - 1];
+  const last = lastMsg;
   const subject = getHeader(first, "Subject").toLowerCase();
   const snippet = (last.snippet || "").toLowerCase();
   const allText = subject + " " + snippet;
@@ -374,20 +307,32 @@ export default async function handler(req, res) {
   const parsed = details
     .filter(Boolean)
     .map((thread) => {
-      // Sort by internalDate (server-assigned ms timestamp) to guarantee chronological order.
-      // The Gmail API usually returns messages oldest-first, but sent messages can appear
-      // out of order relative to received messages when Date headers differ.
-      const msgs = (thread.messages || []).sort(
-        (a, b) => parseInt(a.internalDate || 0) - parseInt(b.internalDate || 0)
-      );
-      const first = msgs[0];
-      const last = msgs[msgs.length - 1];
+      const msgs = thread.messages || [];
+      if (msgs.length === 0) return null;
 
-      const fromRaw = getHeader(first, "From");
-      const subject = getHeader(first, "Subject");
-      // Use internalDate (ms) when available; fall back to Date header
-      const firstDate = first.internalDate ? new Date(parseInt(first.internalDate)).toISOString() : getHeader(first, "Date");
-      const lastDate  = last.internalDate  ? new Date(parseInt(last.internalDate)).toISOString()  : getHeader(last,  "Date");
+      // "first" must be the first message FROM THE BRAND — never from us.
+      // If internalDate is missing/zero on sent messages they'd sort to position 0
+      // and make first = our own email, triggering the gmail.com SKIP_DOMAINS filter.
+      const firstBrand = msgs.find((m) => !(m.labelIds || []).includes("SENT")) || msgs[0];
+
+      // "last" = most recent message by timestamp.
+      // internalDate (server-assigned ms) is preferred; fall back to parsing the Date header.
+      // Both are needed because the thread endpoint sometimes omits internalDate for sent messages.
+      const msgTs = (m) => {
+        const id = parseInt(m.internalDate || 0);
+        if (id > 0) return id;
+        try { return new Date(getHeader(m, "Date")).getTime() || 0; } catch { return 0; }
+      };
+      const last = msgs.reduce((best, m) => msgTs(m) > msgTs(best) ? m : best, msgs[0]);
+
+      const fromRaw = getHeader(firstBrand, "From");
+      const subject = getHeader(firstBrand, "Subject");
+      const firstDate = msgTs(firstBrand) > 0
+        ? new Date(msgTs(firstBrand)).toISOString()
+        : getHeader(firstBrand, "Date");
+      const lastDate = msgTs(last) > 0
+        ? new Date(msgTs(last)).toISOString()
+        : getHeader(last, "Date");
 
       const contact = parseFrom(fromRaw);
       const domain = contact.email.split("@")[1] || "";
@@ -398,14 +343,21 @@ export default async function handler(req, res) {
       if (!contact.email.includes("@")) return null;
 
       const cleanedSubject = stripSubjectPrefixes(subject);
+
+      // Filter noise: subjects that are clearly not brand-deal outreach
+      // (newsletter blasts, platform welcome emails, Instagram growth pitches, etc.)
+      const NOISE_SUBJECT = /\b(welcome to\b|insider update\b|grow your (following|instagram|tiktok|audience|account)\b|invitation to join\b|casting (opps?|opportunities?)\b|join our (program|platform|network)\b|unsubscribe\b)/i;
+      if (NOISE_SUBJECT.test(cleanedSubject || subject)) return null;
       // Concatenate body text from all messages for brand extraction
-      const allBodyText = msgs.map((m) => getTextBody(m.payload)).join("\n");
+      // Only use received messages for body extraction — never the user's own replies,
+      // which can contain product mentions and rates that would pollute brand/offer detection.
+      const receivedMsgs = msgs.filter((m) => !(m.labelIds || []).includes("SENT"));
+      const allBodyText = receivedMsgs.map((m) => getTextBody(m.payload)).join("\n");
       const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject, allBodyText);
-      const offerSummary = extractOfferSummary(msgs);
       const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
-      const status = inferStatus(msgs, userEmail);
+      const status = inferStatus(msgs, last, userEmail);
 
       return {
         id: thread.id,
@@ -416,7 +368,7 @@ export default async function handler(req, res) {
         contact,
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
-        offer: offerSummary || cleanedSubject,
+        offer: cleanedSubject,
         theirRate: null,
         yourRate: null,
         status,
@@ -433,7 +385,7 @@ export default async function handler(req, res) {
   // should remain two distinct cards.
   const grouped = {};
   for (const t of parsed) {
-    const key = t.brand.toLowerCase();
+    const key = t.brand.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
     if (!grouped[key]) {
       grouped[key] = { ...t };
     } else {
