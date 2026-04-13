@@ -293,7 +293,7 @@ export default async function handler(req, res) {
   // Fetch each thread with headers + body parts (for brand extraction from body text)
   // labelIds: detect SENT messages regardless of From address/alias
   // internalDate: server-assigned Unix ms timestamp — more reliable than the Date header
-  const fields = "messages(id,snippet,labelIds,internalDate,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
+  const fields = "id,messages(id,snippet,labelIds,internalDate,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
   const details = await Promise.all(
     threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
@@ -320,24 +320,33 @@ export default async function handler(req, res) {
       // and make first = our own email, triggering the gmail.com SKIP_DOMAINS filter.
       const firstBrand = msgs.find((m) => !(m.labelIds || []).includes("SENT")) || msgs[0];
 
-      // "last" = most recent message by timestamp.
-      // internalDate (server-assigned ms) is preferred; fall back to parsing the Date header.
-      // Both are needed because the thread endpoint sometimes omits internalDate for sent messages.
+      // Gmail returns messages in chronological order — the last element is always the most recent.
+      // Using a timestamp-based reduce was unreliable because internalDate is often omitted
+      // for sent messages, causing them to "lose" the reduce and the first message to win.
+      const last = msgs[msgs.length - 1];
+
       const msgTs = (m) => {
         const id = parseInt(m.internalDate || 0);
         if (id > 0) return id;
-        try { return new Date(getHeader(m, "Date")).getTime() || 0; } catch { return 0; }
+        try { const t = new Date(getHeader(m, "Date")).getTime(); if (t > 0) return t; } catch {}
+        return 0;
       };
-      const last = msgs.reduce((best, m) => msgTs(m) > msgTs(best) ? m : best, msgs[0]);
+
+      // For display dates, scan from the relevant position backwards until we find a valid timestamp.
+      const scanTs = (arr, fromIdx) => {
+        for (let i = fromIdx; i >= 0; i--) {
+          const t = msgTs(arr[i]);
+          if (t > 0) return t;
+        }
+        return 0;
+      };
 
       const fromRaw = getHeader(firstBrand, "From");
       const subject = getHeader(firstBrand, "Subject");
-      const firstDate = msgTs(firstBrand) > 0
-        ? new Date(msgTs(firstBrand)).toISOString()
-        : getHeader(firstBrand, "Date");
-      const lastDate = msgTs(last) > 0
-        ? new Date(msgTs(last)).toISOString()
-        : getHeader(last, "Date");
+      const firstTs = scanTs(msgs, msgs.indexOf(firstBrand));
+      const firstDate = firstTs > 0 ? new Date(firstTs).toISOString() : getHeader(firstBrand, "Date");
+      const lastTs = scanTs(msgs, msgs.length - 1);
+      const lastDate = lastTs > 0 ? new Date(lastTs).toISOString() : getHeader(last, "Date");
 
       const contact = parseFrom(fromRaw);
       const domain = contact.email.split("@")[1] || "";

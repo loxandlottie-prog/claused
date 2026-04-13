@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
@@ -160,6 +160,19 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (!showStatusMenu && !showActionsMenu) return;
+    const handler = (e) => {
+      if (cardRef.current && !cardRef.current.contains(e.target)) {
+        setShowStatusMenu(false);
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showStatusMenu, showActionsMenu]);
 
   const since = daysSince(thread.lastMessage);
   const s = STATUS[thread.status];
@@ -176,7 +189,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
   const saveContact = (field, value) => onFieldChange(thread.id, { contact: { ...thread.contact, [field]: value } });
 
   return (
-    <div className="brand-card">
+    <div className="brand-card" ref={cardRef}>
       <div className="brand-card-main">
         <BrandLogo domain={thread.domain} logo={thread.logo} logoColor={thread.logoColor} />
 
