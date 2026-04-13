@@ -6,6 +6,31 @@ import AnalyticsTab from "./tabs/AnalyticsTab";
 import PasteModal from "./components/PasteModal";
 import PasswordGate from "./components/PasswordGate";
 
+const OVERRIDES_KEY = "inbora_overrides";
+
+const brandKey = (brand) =>
+  (brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+
+const getOverrides = () => {
+  try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}"); }
+  catch { return {}; }
+};
+
+const saveOverride = (key, updates) => {
+  const all = getOverrides();
+  all[key] = { ...all[key], ...updates };
+  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(all));
+};
+
+const applyOverrides = (threads) => {
+  const all = getOverrides();
+  return threads.map((t) => {
+    const ov = all[brandKey(t.brand)];
+    if (!ov) return t;
+    return { ...t, ...ov };
+  });
+};
+
 export default function App() {
   const [unlocked, setUnlocked] = useState(
     sessionStorage.getItem("inbora_unlocked") === "1"
@@ -46,10 +71,10 @@ export default function App() {
         return r.json();
       })
       .then((gmailData) => {
-        // Always replace demo data once Gmail is connected, even if inbox returns nothing
+        const withOverrides = applyOverrides(gmailData);
         setThreads((prev) => {
           const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
-          return [...gmailData, ...manualThreads];
+          return [...withOverrides, ...manualThreads];
         });
       })
       .catch(console.error);
@@ -65,11 +90,11 @@ export default function App() {
 
   const handleStatusChange = (id, newStatus) => {
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? { ...t, status: newStatus, lastMessage: new Date().toISOString().slice(0, 10) }
-          : t
-      )
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        saveOverride(brandKey(t.brand), { status: newStatus });
+        return { ...t, status: newStatus, lastMessage: new Date().toISOString().slice(0, 10) };
+      })
     );
   };
 
@@ -78,23 +103,23 @@ export default function App() {
   };
 
   const handleDeliverableToggle = (threadId, deliverableId) => {
-    setThreads((prev) => prev.map((t) =>
-      t.id !== threadId ? t : {
-        ...t,
-        deliverables: (t.deliverables || []).map((d) =>
-          d.id === deliverableId ? { ...d, done: !d.done } : d
-        ),
-      }
-    ));
+    setThreads((prev) => prev.map((t) => {
+      if (t.id !== threadId) return t;
+      const deliverables = (t.deliverables || []).map((d) =>
+        d.id === deliverableId ? { ...d, done: !d.done } : d
+      );
+      saveOverride(brandKey(t.brand), { deliverables });
+      return { ...t, deliverables };
+    }));
   };
 
   const handleDeliverableAdd = (threadId, text) => {
-    setThreads((prev) => prev.map((t) =>
-      t.id !== threadId ? t : {
-        ...t,
-        deliverables: [...(t.deliverables || []), { id: Date.now(), text, done: false }],
-      }
-    ));
+    setThreads((prev) => prev.map((t) => {
+      if (t.id !== threadId) return t;
+      const deliverables = [...(t.deliverables || []), { id: Date.now(), text, done: false }];
+      saveOverride(brandKey(t.brand), { deliverables });
+      return { ...t, deliverables };
+    }));
   };
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;

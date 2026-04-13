@@ -496,12 +496,12 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: 1;
 }
 .brand-dates {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-left: auto;
 }
 .date-chip { font-size: 11.5px; color: var(--text3); }
 .date-sep { color: var(--border2); font-size: 11px; }
