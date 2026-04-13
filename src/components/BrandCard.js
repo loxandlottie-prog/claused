@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
-  reply_needed:    { label: "Reply needed",      cls: "status-red"    },
-  you_replied:     { label: "Replied",           cls: "status-blue"   },
-  waiting_on_them: { label: "Waiting on them",   cls: "status-yellow" },
-  in_progress:     { label: "In progress",       cls: "status-teal"   },
-  deal_closed:     { label: "Closed",            cls: "status-green"  },
-  deal_passed:     { label: "Passed",            cls: "status-gray"   },
+  active:   { label: "Active",    cls: "status-blue"  },
+  accepted: { label: "Accepted",  cls: "status-teal"  },
+  closed:   { label: "Closed",    cls: "status-green" },
+  rejected: { label: "Rejected",  cls: "status-gray"  },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -158,21 +156,19 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
 
 export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef(null);
 
   useEffect(() => {
-    if (!showStatusMenu && !showActionsMenu) return;
+    if (!showStatusMenu) return;
     const handler = (e) => {
       if (cardRef.current && !cardRef.current.contains(e.target)) {
         setShowStatusMenu(false);
-        setShowActionsMenu(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [showStatusMenu, showActionsMenu]);
+  }, [showStatusMenu]);
 
   const since = daysSince(thread.lastMessage);
   const s = STATUS[thread.status];
@@ -237,21 +233,6 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                   <path d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 11L4 6H20ZM20 18H4V8L12 13L20 8V18Z" fill="currentColor"/>
                 </svg>
               </a>
-              <div className="actions-picker" onClick={(e) => e.stopPropagation()}>
-                <button className="actions-menu-btn" onClick={() => setShowActionsMenu((v) => !v)}>⋯</button>
-                {showActionsMenu && (
-                  <div className="actions-menu">
-                    <button className="actions-menu-item actions-item-close"
-                      onClick={() => { onStatusChange(thread.id, "deal_closed"); setShowActionsMenu(false); }}>
-                      ✓ Close deal
-                    </button>
-                    <button className="actions-menu-item actions-item-pass"
-                      onClick={() => { onStatusChange(thread.id, "deal_passed"); setShowActionsMenu(false); }}>
-                      ✕ Pass
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
@@ -324,7 +305,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                 label="Your rate"
                 className="rate-chip rate-yours"
               />
-              {thread.status === "deal_closed" && (
+              {thread.status === "closed" && (
                 <EditableRate
                   value={thread.revenue}
                   onSave={(v) => save("revenue", v)}
@@ -337,23 +318,23 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
               <div className="brand-dates">
                 <span className="date-chip">Reached out {fmtDate(thread.firstReached)}</span>
                 <span className="date-sep">·</span>
-                <span className={`date-chip ${since >= 14 && thread.status !== "deal_closed" ? "date-stale" : ""}`}>
+                <span className={`date-chip ${since >= 14 && thread.status !== "closed" ? "date-stale" : ""}`}>
                   Last message {since === 0 ? "today" : since === 1 ? "yesterday" : `${since}d ago`}
                 </span>
               </div>
               <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
-                {!["in_progress", "deal_closed", "deal_passed"].includes(thread.status) && (
+                {thread.status === "active" && (
                   <>
                     <button
                       className="card-action-btn card-action-accept"
-                      onClick={() => onStatusChange(thread.id, "in_progress")}
+                      onClick={() => onStatusChange(thread.id, "accepted")}
                       title="Accept deal"
                     >
                       ✓ Accept
                     </button>
                     <button
                       className="card-action-btn card-action-reject"
-                      onClick={() => onStatusChange(thread.id, "deal_passed")}
+                      onClick={() => onStatusChange(thread.id, "rejected")}
                       title="Reject deal"
                     >
                       ✕ Reject
