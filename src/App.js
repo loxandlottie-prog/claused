@@ -89,13 +89,12 @@ export default function App() {
   };
 
   const handleStatusChange = (id, newStatus) => {
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t;
-        saveOverride(brandKey(t.brand), { status: newStatus });
-        return { ...t, status: newStatus, lastMessage: new Date().toISOString().slice(0, 10) };
-      })
-    );
+    setThreads((prev) => {
+      const next = prev.map((t) => t.id === id ? { ...t, status: newStatus } : t);
+      const changed = next.find((t) => t.id === id);
+      if (changed) saveOverride(brandKey(changed.brand), { status: newStatus });
+      return next;
+    });
   };
 
   const handleThreadAdd = (thread) => {
@@ -103,23 +102,31 @@ export default function App() {
   };
 
   const handleDeliverableToggle = (threadId, deliverableId) => {
-    setThreads((prev) => prev.map((t) => {
-      if (t.id !== threadId) return t;
-      const deliverables = (t.deliverables || []).map((d) =>
-        d.id === deliverableId ? { ...d, done: !d.done } : d
-      );
-      saveOverride(brandKey(t.brand), { deliverables });
-      return { ...t, deliverables };
-    }));
+    setThreads((prev) => {
+      const next = prev.map((t) => {
+        if (t.id !== threadId) return t;
+        const deliverables = (t.deliverables || []).map((d) =>
+          d.id === deliverableId ? { ...d, done: !d.done } : d
+        );
+        return { ...t, deliverables };
+      });
+      const changed = next.find((t) => t.id === threadId);
+      if (changed) saveOverride(brandKey(changed.brand), { deliverables: changed.deliverables });
+      return next;
+    });
   };
 
   const handleDeliverableAdd = (threadId, text) => {
-    setThreads((prev) => prev.map((t) => {
-      if (t.id !== threadId) return t;
-      const deliverables = [...(t.deliverables || []), { id: Date.now(), text, done: false }];
-      saveOverride(brandKey(t.brand), { deliverables });
-      return { ...t, deliverables };
-    }));
+    setThreads((prev) => {
+      const next = prev.map((t) => {
+        if (t.id !== threadId) return t;
+        const deliverables = [...(t.deliverables || []), { id: Date.now(), text, done: false }];
+        return { ...t, deliverables };
+      });
+      const changed = next.find((t) => t.id === threadId);
+      if (changed) saveOverride(brandKey(changed.brand), { deliverables: changed.deliverables });
+      return next;
+    });
   };
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
