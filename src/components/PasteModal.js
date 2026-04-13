@@ -3,7 +3,6 @@ import { parseThread } from "../utils";
 
 const STATUS_OPTIONS = [
   { value: "active",   label: "Active"   },
-  { value: "accepted", label: "Accepted" },
   { value: "closed",   label: "Closed"   },
   { value: "rejected", label: "Rejected" },
 ];

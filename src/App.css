@@ -149,7 +149,7 @@ textarea { resize: vertical; }
 /* Stat grid */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 .stat-card {
@@ -161,6 +161,18 @@ textarea { resize: vertical; }
   flex-direction: column;
   gap: 6px;
   box-shadow: var(--shadow-sm);
+}
+.stat-card-btn {
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.stat-card-btn:hover {
+  border-color: var(--primary);
+}
+.stat-card-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 .stat-card-alert {
   border-color: #FECACA;

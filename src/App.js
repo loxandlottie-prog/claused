@@ -13,7 +13,7 @@ const brandKey = (brand) =>
 
 const STATUS_MIGRATION = {
   reply_needed: "active", you_replied: "active", waiting_on_them: "active",
-  in_progress: "accepted", deal_closed: "closed", deal_passed: "rejected",
+  in_progress: "active", accepted: "active", deal_closed: "closed", deal_passed: "rejected",
 };
 
 const getOverrides = () => {

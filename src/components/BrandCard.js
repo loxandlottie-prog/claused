@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
-  active:   { label: "Active",    cls: "status-blue"  },
-  accepted: { label: "Accepted",  cls: "status-teal"  },
-  closed:   { label: "Closed",    cls: "status-green" },
-  rejected: { label: "Rejected",  cls: "status-gray"  },
+  active:   { label: "Active",   cls: "status-blue"  },
+  closed:   { label: "Closed",   cls: "status-green" },
+  rejected: { label: "Rejected", cls: "status-gray"  },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -327,7 +326,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                   <>
                     <button
                       className="card-action-btn card-action-accept"
-                      onClick={() => onStatusChange(thread.id, "accepted")}
+                      onClick={() => onStatusChange(thread.id, "active")}
                       title="Accept deal"
                     >
                       ✓ Accept

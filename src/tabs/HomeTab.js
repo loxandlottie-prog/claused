@@ -2,15 +2,7 @@ import React, { useState } from "react";
 import BrandCard from "../components/BrandCard";
 import { daysSince } from "../utils";
 
-const FILTERS = [
-  { key: "all",      label: "All"      },
-  { key: "active",   label: "Active"   },
-  { key: "accepted", label: "Accepted" },
-  { key: "closed",   label: "Closed"   },
-  { key: "rejected", label: "Rejected" },
-];
-
-// Lower score = shown first. Accepted deals top, then active, then closed/rejected.
+// Lower score = shown first. Active top, then closed/rejected.
 function priorityScore(t) {
   const days = daysSince(t.lastMessage);
   const value =
@@ -21,7 +13,6 @@ function priorityScore(t) {
   const stalePenalty = days > 21 ? Math.min(300, (days - 21) * 4) : 0;
 
   switch (t.status) {
-    case "accepted": return -1000 - valueBoost;
     case "active":   return 1000 - valueBoost + stalePenalty;
     case "closed":   return 9000;
     case "rejected": return 9500;
@@ -41,8 +32,8 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     : threads.filter((t) => t.firstReached.startsWith(year));
 
   const activeCount   = yearFiltered.filter((t) => t.status === "active").length;
-  const acceptedCount = yearFiltered.filter((t) => t.status === "accepted").length;
   const closedCount   = yearFiltered.filter((t) => t.status === "closed").length;
+  const rejectedCount = yearFiltered.filter((t) => t.status === "rejected").length;
 
   const filtered = yearFiltered.filter((t) =>
     filter === "all" ? true : t.status === filter
@@ -51,12 +42,18 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   const sorted = [...filtered].sort((a, b) => priorityScore(a) - priorityScore(b));
 
   // Section groups for "all" view
-  const acceptedDeals = sorted.filter((t) => t.status === "accepted");
   const activeDeals   = sorted.filter((t) => t.status === "active");
   const closedDeals   = sorted.filter((t) => t.status === "closed");
   const rejectedDeals = sorted.filter((t) => t.status === "rejected");
 
   const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail };
+
+  const STAT_FILTERS = [
+    { key: "all",      label: "Total brands", count: yearFiltered.length, highlight: false },
+    { key: "active",   label: "Active",        count: activeCount,         highlight: false },
+    { key: "closed",   label: "Closed",        count: closedCount,         highlight: true  },
+    { key: "rejected", label: "Rejected",      count: rejectedCount,       highlight: false },
+  ];
 
   if (threads.length === 0) {
     return (
@@ -73,56 +70,39 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   return (
     <div className="home-page">
       <div className="stat-grid">
-        <div className="stat-card">
-          <span className="stat-label">Total brands</span>
-          <span className="stat-value">{yearFiltered.length}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Active</span>
-          <span className="stat-value">{activeCount}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Accepted</span>
-          <span className={`stat-value ${acceptedCount > 0 ? "stat-value-green" : ""}`}>{acceptedCount}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Closed</span>
-          <span className="stat-value stat-value-green">{closedCount}</span>
-        </div>
-      </div>
-
-      <div className="filter-bar">
-        {FILTERS.map((f) => (
+        {STAT_FILTERS.map((s) => (
           <button
-            key={f.key}
-            className={`filter-btn ${filter === f.key ? "filter-btn-active" : ""}`}
-            onClick={() => setFilter(f.key)}
+            key={s.key}
+            className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
+            onClick={() => setFilter(s.key)}
           >
-            {f.label}
-            {f.key === "accepted" && acceptedCount > 0 && (
-              <span className="filter-count-badge filter-count-green">{acceptedCount}</span>
-            )}
-          </button>
-        ))}
-
-        <div className="filter-bar-sep" />
-
-        <button
-          className={`filter-btn ${year === "all" ? "filter-btn-active" : ""}`}
-          onClick={() => setYear("all")}
-        >
-          All years
-        </button>
-        {years.map((y) => (
-          <button
-            key={y}
-            className={`filter-btn ${year === y ? "filter-btn-active" : ""}`}
-            onClick={() => setYear(y)}
-          >
-            {y}
+            <span className="stat-label">{s.label}</span>
+            <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-green" : ""}`}>
+              {s.count}
+            </span>
           </button>
         ))}
       </div>
+
+      {years.length > 1 && (
+        <div className="filter-bar filter-bar-years">
+          <button
+            className={`filter-btn ${year === "all" ? "filter-btn-active" : ""}`}
+            onClick={() => setYear("all")}
+          >
+            All years
+          </button>
+          {years.map((y) => (
+            <button
+              key={y}
+              className={`filter-btn ${year === y ? "filter-btn-active" : ""}`}
+              onClick={() => setYear(y)}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="thread-list">
         {filtered.length === 0 ? (
@@ -131,15 +111,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
           sorted.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)
         ) : (
           <>
-            {acceptedDeals.length > 0 && (
-              <>
-                <div className="section-header section-header-active">
-                  Accepted <span className="section-count section-count-active">{acceptedDeals.length}</span>
-                </div>
-                {acceptedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
-              </>
-            )}
-
             {activeDeals.length > 0 && (
               <>
                 <div className="section-header">
