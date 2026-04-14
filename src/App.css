@@ -276,11 +276,10 @@ textarea { resize: vertical; }
 /* Progress track */
 .goal-track {
   position: relative;
-  height: 7px;
-  background: var(--bg);
+  height: 8px;
+  background: #E5E7EB;
   border-radius: 999px;
-  overflow: visible;
-  border: 1px solid var(--border);
+  overflow: hidden;
 }
 .goal-fill {
   position: absolute;
@@ -288,6 +287,7 @@ textarea { resize: vertical; }
   height: 100%;
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
 }
 .goal-fill-glow {
   position: absolute;
