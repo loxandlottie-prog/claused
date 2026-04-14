@@ -27,13 +27,11 @@ function saveGoal(year, data) {
 }
 
 function ProgressBar({ pct, achieved }) {
-  const color = achieved ? "var(--green)" : pct >= 75 ? "#F59E0B" : "var(--primary)";
+  const color = achieved ? "#10B981" : pct >= 75 ? "#F59E0B" : "#0D9488";
+  const width  = Math.min(100, Math.max(0, pct));
   return (
     <div className="goal-track">
-      <div className="goal-fill" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
-      {pct > 2 && pct < 100 && (
-        <div className="goal-fill-glow" style={{ left: `${Math.min(100, pct)}%`, background: color }} />
-      )}
+      <div className="goal-fill" style={{ width: `${width}%`, backgroundColor: color }} />
     </div>
   );
 }
