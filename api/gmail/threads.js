@@ -82,15 +82,15 @@ function extractBrandFromBody(text) {
   const intro = text.slice(0, 2000);
   const patterns = [
     // "reaching out on behalf of Fresh Step"
-    /\bon behalf of\s+([A-Z][A-Za-z0-9&'.() ]{1,40?}?)(?:\s*[,!.]|\s+(?:to|and|would|is|has)\b)/,
+    /\bon behalf of\s+([A-Z][A-Za-z0-9&'.()\- ]{1,40?}?)(?:\s*[,!.]|\s+(?:to|and|would|is|has)\b)/,
     // "I'm Sarah from Fresh Step —"
-    /\bfrom\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
+    /\bfrom\s+([A-Z][A-Za-z0-9&'.\- ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
     // "our team at Fresh Step"  /  "I work at Fresh Step"
-    /\bat\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
+    /\bat\s+([A-Z][A-Za-z0-9&'.\- ]{1,30}?)(?:\s*[—\-,!.]|\s+(?:and|&|to|is|has|would|we|our)\b)/,
     // "Fresh Step is looking to / would love to / is excited to"
-    /\b([A-Z][A-Za-z0-9&'. ]{1,30}?)\s+(?:is looking to|would love to|is excited to|has a campaign|is reaching out|is interested in)/,
+    /\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+(?:is looking to|would love to|is excited to|has a campaign|is reaching out|is interested in)/,
     // "representing Fresh Step"
-    /\brepresenting\s+([A-Z][A-Za-z0-9&'. ]{1,30}?)(?:\s*[,!.]|\s+(?:and|to|in)\b)/i,
+    /\brepresenting\s+([A-Z][A-Za-z0-9&'.\- ]{1,30}?)(?:\s*[,!.]|\s+(?:and|to|in)\b)/i,
   ];
   for (const pat of patterns) {
     const m = intro.match(pat);
@@ -127,9 +127,10 @@ function toBrandInfo(contact, domain, subject, bodyText) {
   // No ^ anchor — brand name may appear anywhere in the subject
   // (e.g. "Collaboration Proposal: CATTASAURUS x Lox and Latke")
   if (clean) {
-    const xMatch = clean.match(/\b([A-Z][A-Za-z0-9&' ]{1,30}?)\s+[xX×]\s+/);
+    const xMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+[xX×]\s+/);
     if (xMatch) return { brand: normalizeBrandName(xMatch[1].trim()), senderIsAgency: true };
-    const labelMatch = clean.match(/\b([A-Z][A-Za-z0-9&' ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/i);
+    // No /i flag — requires uppercase start so "fect" (after "Purr-") can't be a match start
+    const labelMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/);
     if (labelMatch) return { brand: normalizeBrandName(labelMatch[1].trim()), senderIsAgency: true };
   }
 

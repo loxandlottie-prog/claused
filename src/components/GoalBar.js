@@ -3,123 +3,190 @@ import { formatCurrency } from "../utils";
 
 const GOAL_KEY = (year) => `inbora_goal_${year}`;
 
+const MODES = [
+  { key: "revenue", label: "$" },
+  { key: "count",   label: "#" },
+  { key: "both",    label: "$+#" },
+];
+
+function loadGoal(year) {
+  try {
+    const raw = localStorage.getItem(GOAL_KEY(year));
+    if (!raw) return { mode: "revenue", revenue: null, count: null };
+    const parsed = JSON.parse(raw);
+    // backwards compat: old format was just a number
+    if (typeof parsed === "number") return { mode: "revenue", revenue: parsed, count: null };
+    return parsed;
+  } catch {
+    return { mode: "revenue", revenue: null, count: null };
+  }
+}
+
+function saveGoal(year, data) {
+  localStorage.setItem(GOAL_KEY(year), JSON.stringify(data));
+}
+
+function ProgressBar({ pct, achieved }) {
+  const color = achieved ? "var(--green)" : pct >= 75 ? "#F59E0B" : "var(--primary)";
+  return (
+    <div className="goal-track">
+      <div className="goal-fill" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
+      {pct > 2 && pct < 100 && (
+        <div className="goal-fill-glow" style={{ left: `${Math.min(100, pct)}%`, background: color }} />
+      )}
+    </div>
+  );
+}
+
+function GoalRow({ label, current, goal, unit, onEditGoal, editingThis, draftRef, onSave, onStartEdit }) {
+  const pct      = goal > 0 ? Math.min(100, (current / goal) * 100) : 0;
+  const achieved = goal > 0 && current >= goal;
+  const color    = achieved ? "var(--green)" : pct >= 75 ? "#F59E0B" : "var(--primary)";
+
+  return (
+    <div className="goal-row">
+      <div className="goal-row-header">
+        <span className="goal-row-label">{label}</span>
+        <div className="goal-bar-right">
+          <span className="goal-earned">{unit === "$" ? formatCurrency(current) : current}</span>
+          <span className="goal-of">of</span>
+          {editingThis ? (
+            <span className="goal-edit-inline">
+              {unit === "$" && <span className="goal-edit-prefix">$</span>}
+              <input
+                ref={draftRef}
+                className="goal-edit-input"
+                type="number"
+                onBlur={onSave}
+                onKeyDown={(e) => { if (e.key === "Enter") onSave(); if (e.key === "Escape") onSave(); }}
+                placeholder={unit === "$" ? "50000" : "10"}
+              />
+            </span>
+          ) : (
+            <button className="goal-target" onClick={onStartEdit} title="Click to edit goal">
+              {goal != null ? (unit === "$" ? formatCurrency(goal) : `${goal} deals`) : <em className="goal-unset-inline">set goal</em>}
+            </button>
+          )}
+        </div>
+      </div>
+      <ProgressBar pct={pct} achieved={achieved} />
+      <div className="goal-bar-footer">
+        <span className="goal-count">
+          {unit === "$"
+            ? (current === 0 ? "No revenue yet" : `${Math.round(pct)}% to goal`)
+            : (current === 0 ? "No deals closed yet" : `${current} deal${current !== 1 ? "s" : ""} closed`)}
+        </span>
+        <span className="goal-pct" style={{ color }}>
+          {achieved ? "Goal reached ✓" : goal != null ? `${Math.round(pct)}%` : ""}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function GoalBar({ threads }) {
   const year = new Date().getFullYear();
-  const [goal, setGoal]     = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft]   = useState("");
-  const inputRef = useRef(null);
+  const [goalData, setGoalData] = useState(() => loadGoal(year));
+  const [editingField, setEditingField] = useState(null); // 'revenue' | 'count' | null
+  const revInputRef = useRef(null);
+  const cntInputRef = useRef(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(GOAL_KEY(year));
-    if (saved) setGoal(parseFloat(saved));
-  }, [year]);
+  useEffect(() => { setGoalData(loadGoal(year)); }, [year]);
 
-  // Closed deals this calendar year (by lastMessage year)
+  // Closed deals this year — check either firstReached or lastMessage year
+  const yearStr = String(year);
   const closedThisYear = threads.filter(
-    (t) => t.status === "closed" && (t.lastMessage || "").startsWith(String(year))
+    (t) => t.status === "closed" &&
+      ((t.lastMessage || "").startsWith(yearStr) || (t.firstReached || "").startsWith(yearStr))
   );
   const earned      = closedThisYear.reduce((sum, t) => sum + (t.yourRate || 0), 0);
   const closedCount = closedThisYear.length;
-  const pct         = goal > 0 ? Math.min(100, (earned / goal) * 100) : 0;
-  const achieved    = goal > 0 && earned >= goal;
 
-  const startEdit = (e) => {
-    e.stopPropagation();
-    setDraft(goal != null ? String(goal) : "");
-    setEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
+  const update = (changes) => {
+    const next = { ...goalData, ...changes };
+    setGoalData(next);
+    saveGoal(year, next);
   };
 
-  const save = () => {
-    const n = parseFloat(String(draft).replace(/[$,\s]/g, ""));
-    if (!isNaN(n) && n > 0) {
-      setGoal(n);
-      localStorage.setItem(GOAL_KEY(year), String(n));
-    }
-    setEditing(false);
+  const startEdit = (field) => {
+    setEditingField(field);
+    setTimeout(() => {
+      (field === "revenue" ? revInputRef : cntInputRef).current?.focus();
+      const ref = (field === "revenue" ? revInputRef : cntInputRef).current;
+      if (ref) ref.value = goalData[field] != null ? String(goalData[field]) : "";
+    }, 0);
   };
 
-  const clear = () => {
-    setGoal(null);
-    localStorage.removeItem(GOAL_KEY(year));
-    setEditing(false);
+  const saveEdit = (field) => {
+    const ref = (field === "revenue" ? revInputRef : cntInputRef).current;
+    const raw = ref?.value || "";
+    const n   = parseFloat(raw.replace(/[$,\s]/g, ""));
+    update({ [field]: !isNaN(n) && n > 0 ? n : goalData[field] });
+    setEditingField(null);
   };
 
-  const barColor = achieved
-    ? "var(--green)"
-    : pct >= 75
-    ? "#F59E0B"
-    : "var(--primary)";
+  const hasAnyGoal = goalData.revenue != null || goalData.count != null;
 
-  if (!goal && !editing) {
+  if (!hasAnyGoal && editingField === null) {
     return (
-      <button className="goal-bar goal-bar-unset" onClick={() => { setDraft(""); setEditing(true); }}>
+      <button
+        className="goal-bar goal-bar-unset"
+        onClick={() => { startEdit("revenue"); }}
+      >
         <span className="goal-year-chip">{year}</span>
-        Set a revenue goal
+        <span>Set a goal for {year}</span>
         <span className="goal-set-arrow">→</span>
       </button>
     );
   }
 
+  const mode = goalData.mode;
+
   return (
     <div className="goal-bar">
-      <div className="goal-bar-header">
+      <div className="goal-bar-top-row">
         <div className="goal-bar-left">
           <span className="goal-year-chip">{year}</span>
-          <span className="goal-title">Revenue Goal</span>
+          <span className="goal-title">Goal</span>
         </div>
-        <div className="goal-bar-right">
-          <span className="goal-earned">{formatCurrency(earned)}</span>
-          <span className="goal-of">of</span>
-          {editing ? (
-            <span className="goal-edit-inline">
-              <span className="goal-edit-prefix">$</span>
-              <input
-                ref={inputRef}
-                className="goal-edit-input"
-                type="number"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={save}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") save();
-                  if (e.key === "Escape") setEditing(false);
-                }}
-                placeholder="50000"
-              />
-            </span>
-          ) : (
-            <button className="goal-target" onClick={startEdit} title="Click to edit goal">
-              {formatCurrency(goal)}
+        <div className="goal-mode-toggle">
+          {MODES.map((m) => (
+            <button
+              key={m.key}
+              className={`goal-mode-btn ${mode === m.key ? "goal-mode-active" : ""}`}
+              onClick={() => update({ mode: m.key })}
+            >
+              {m.label}
             </button>
-          )}
+          ))}
         </div>
+        <button className="goal-clear" onClick={() => { update({ revenue: null, count: null }); setEditingField(null); }} title="Remove goal">×</button>
       </div>
 
-      <div className="goal-track">
-        <div
-          className="goal-fill"
-          style={{ width: `${pct}%`, background: barColor }}
+      {(mode === "revenue" || mode === "both") && (
+        <GoalRow
+          label="Revenue"
+          current={earned}
+          goal={goalData.revenue}
+          unit="$"
+          editingThis={editingField === "revenue"}
+          draftRef={revInputRef}
+          onStartEdit={() => startEdit("revenue")}
+          onSave={() => saveEdit("revenue")}
         />
-        {pct > 0 && pct < 100 && (
-          <div className="goal-fill-glow" style={{ left: `${pct}%`, background: barColor }} />
-        )}
-      </div>
+      )}
 
-      <div className="goal-bar-footer">
-        <span className="goal-count">
-          {closedCount === 0
-            ? "No deals closed yet"
-            : `${closedCount} deal${closedCount !== 1 ? "s" : ""} closed`}
-        </span>
-        <span className="goal-pct" style={{ color: barColor }}>
-          {achieved ? "Goal reached ✓" : `${Math.round(pct)}%`}
-        </span>
-      </div>
-
-      {!editing && (
-        <button className="goal-clear" onClick={clear} title="Remove goal">×</button>
+      {(mode === "count" || mode === "both") && (
+        <GoalRow
+          label="Deals closed"
+          current={closedCount}
+          goal={goalData.count}
+          unit="#"
+          editingThis={editingField === "count"}
+          draftRef={cntInputRef}
+          onStartEdit={() => startEdit("count")}
+          onSave={() => saveEdit("count")}
+        />
       )}
     </div>
   );

@@ -14,9 +14,8 @@ const DATE_OPTIONS = [
 // Lower score = shown first.
 function priorityScore(t) {
   const days = daysSince(t.lastMessage);
-  const value =
-    (typeof t.yourRate === "number" && t.yourRate > 0 ? t.yourRate : 0);
-  const valueBoost = Math.min(500, value / 10);
+  const value = typeof t.yourRate === "number" && t.yourRate > 0 ? t.yourRate : 0;
+  const valueBoost   = Math.min(500, value / 10);
   const stalePenalty = days > 21 ? Math.min(300, (days - 21) * 4) : 0;
 
   switch (t.status) {
@@ -49,7 +48,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   const filtered = dateFiltered.filter((t) =>
     filter === "all" ? true : t.status === filter
   );
-
   const sorted = [...filtered].sort((a, b) => priorityScore(a) - priorityScore(b));
 
   const pendingDeals  = sorted.filter((t) => t.status === "pending");
@@ -59,12 +57,13 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail };
 
+  // Pending first (needs action), then pipeline, then outcomes, total last as summary
   const STAT_FILTERS = [
-    { key: "all",      label: "Total",    count: dateFiltered.length, highlight: false },
-    { key: "pending",  label: "Pending",  count: pendingCount,        highlight: pendingCount > 0 },
-    { key: "active",   label: "Active",   count: activeCount,         highlight: false },
-    { key: "closed",   label: "Closed",   count: closedCount,         highlight: true  },
-    { key: "rejected", label: "Rejected", count: rejectedCount,       highlight: false },
+    { key: "pending",  label: "Pending",  count: pendingCount,        highlight: pendingCount > 0  },
+    { key: "active",   label: "Active",   count: activeCount,         highlight: false             },
+    { key: "closed",   label: "Closed",   count: closedCount,         highlight: true              },
+    { key: "rejected", label: "Rejected", count: rejectedCount,       highlight: false             },
+    { key: "all",      label: "Total",    count: dateFiltered.length, highlight: false             },
   ];
 
   if (threads.length === 0) {
@@ -83,24 +82,28 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     <div className="home-page">
       <GoalBar threads={threads} />
 
-      <div className="stats-row">
-        <div className="stat-grid">
-          {STAT_FILTERS.map((s) => (
-            <button
-              key={s.key}
-              className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
-              onClick={() => setFilter(s.key)}
-            >
-              <span className="stat-label">{s.label}</span>
-              <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-highlight" : ""}`}>
-                {s.count}
-              </span>
-            </button>
-          ))}
-        </div>
+      <div className="stat-grid">
+        {STAT_FILTERS.map((s) => (
+          <button
+            key={s.key}
+            className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
+            onClick={() => setFilter(s.key)}
+          >
+            <span className="stat-label">{s.label}</span>
+            <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-highlight" : ""}`}>
+              {s.count}
+            </span>
+          </button>
+        ))}
+      </div>
 
+      <div className="thread-list-bar">
+        <span className="thread-list-count">
+          {filtered.length} brand{filtered.length !== 1 ? "s" : ""}
+          {filter !== "all" ? ` · ${STAT_FILTERS.find(s => s.key === filter)?.label}` : ""}
+        </span>
         <select
-          className="date-select"
+          className="date-select-inline"
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
         >
@@ -125,7 +128,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
                 {pendingDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-
             {activeDeals.length > 0 && (
               <>
                 <div className="section-header">
@@ -134,7 +136,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
                 {activeDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-
             {closedDeals.length > 0 && (
               <>
                 <div className="section-header section-header-muted">
@@ -143,7 +144,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
                 {closedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-
             {rejectedDeals.length > 0 && (
               <>
                 <div className="section-header section-header-muted">
