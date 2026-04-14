@@ -403,24 +403,6 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                 </span>
               </div>
               <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
-                {thread.status === "new" && (
-                  <>
-                    <button
-                      className="card-action-btn card-action-accept"
-                      onClick={() => onStatusChange(thread.id, "negotiating")}
-                      title="Start negotiating"
-                    >
-                      ✓ Engage
-                    </button>
-                    <button
-                      className="card-action-btn card-action-reject"
-                      onClick={() => onStatusChange(thread.id, "declined")}
-                      title="Decline deal"
-                    >
-                      ✕ Decline
-                    </button>
-                  </>
-                )}
                 <button
                   className="expand-btn"
                   onClick={() => setExpanded((v) => !v)}
