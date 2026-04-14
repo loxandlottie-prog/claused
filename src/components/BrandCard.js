@@ -114,6 +114,79 @@ function getGmailUrl(threadId, gmailEmail) {
   return `https://mail.google.com/mail/${authuser}#all/${threadId}`;
 }
 
+function Attachments({ attachments, gmailEmail, onUseRate }) {
+  const [scanning, setScanning] = useState(null); // attachmentId being scanned
+  const [results, setResults] = useState({});      // attachmentId → [amounts]
+
+  if (!attachments || attachments.length === 0) return null;
+
+  const isContract = (a) => /\.(pdf|docx?|txt)$/i.test(a.filename);
+
+  const scan = async (a) => {
+    if (results[a.attachmentId]) return;
+    setScanning(a.attachmentId);
+    try {
+      const res = await fetch(`/api/gmail/attachment?msgId=${a.msgId}&attachmentId=${a.attachmentId}`);
+      const data = await res.json();
+      setResults((r) => ({ ...r, [a.attachmentId]: data.amounts || [] }));
+    } catch {
+      setResults((r) => ({ ...r, [a.attachmentId]: [] }));
+    } finally {
+      setScanning(null);
+    }
+  };
+
+  const fmt = (n) => "$" + Number(n).toLocaleString();
+
+  return (
+    <div className="attachments-section">
+      <div className="deliverables-title">Attachments</div>
+      {attachments.map((a) => (
+        <div key={a.attachmentId} className="attachment-row">
+          <span className="attachment-icon">📎</span>
+          <a
+            href={getGmailUrl(a.msgId, gmailEmail)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="attachment-name"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {a.filename}
+          </a>
+          <span className="attachment-size">{a.size > 0 ? `${Math.round(a.size / 1024)}KB` : ""}</span>
+          {isContract(a) && !results[a.attachmentId] && (
+            <button
+              className="attachment-scan-btn"
+              onClick={(e) => { e.stopPropagation(); scan(a); }}
+              disabled={scanning === a.attachmentId}
+            >
+              {scanning === a.attachmentId ? "Scanning…" : "Scan for rate"}
+            </button>
+          )}
+          {results[a.attachmentId] !== undefined && (
+            results[a.attachmentId].length > 0 ? (
+              <span className="attachment-amounts">
+                {results[a.attachmentId].map((n) => (
+                  <button
+                    key={n}
+                    className="attachment-amount-btn"
+                    onClick={(e) => { e.stopPropagation(); onUseRate(n); }}
+                    title="Use as agreed rate"
+                  >
+                    {fmt(n)}
+                  </button>
+                ))}
+              </span>
+            ) : (
+              <span className="attachment-no-rate">No amounts found</span>
+            )
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
   const [newText, setNewText] = useState("");
 
@@ -288,30 +361,12 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
 
           <div className="brand-meta-row">
             <div className="brand-rates">
-              {thread.theirRate === "product" ? (
-                <span className="rate-chip rate-product editable-hover" onClick={(e) => { e.stopPropagation(); save("theirRate", null); }} title="Click to clear">Product only</span>
-              ) : (
-                <EditableRate
-                  value={thread.theirRate}
-                  onSave={(v) => save("theirRate", v)}
-                  label="Their rate"
-                  className="rate-chip rate-their"
-                />
-              )}
               <EditableRate
                 value={thread.yourRate}
                 onSave={(v) => save("yourRate", v)}
-                label="Your rate"
+                label="Agreed upon rate"
                 className="rate-chip rate-yours"
               />
-              {thread.status === "closed" && (
-                <EditableRate
-                  value={thread.revenue}
-                  onSave={(v) => save("revenue", v)}
-                  label="Closed"
-                  className="rate-chip rate-closed"
-                />
-              )}
             </div>
             <div className="brand-dates-row">
               <div className="brand-dates">
@@ -359,6 +414,11 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
             threadId={thread.id}
             onToggle={onDeliverableToggle}
             onAdd={onDeliverableAdd}
+          />
+          <Attachments
+            attachments={thread.attachments}
+            gmailEmail={gmailEmail}
+            onUseRate={(n) => save("yourRate", n)}
           />
           {subThreads.length > 0 && (
             <div className="sub-threads-section">

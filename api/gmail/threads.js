@@ -172,6 +172,28 @@ function toISODate(raw) {
   catch { return new Date().toISOString().slice(0, 10); }
 }
 
+// Recursively collect attachment metadata from a message payload.
+function getAttachments(payload, msgId) {
+  const out = [];
+  const scan = (parts) => {
+    if (!parts) return;
+    for (const part of parts) {
+      if (part.filename && part.body?.attachmentId) {
+        out.push({
+          filename: part.filename,
+          attachmentId: part.body.attachmentId,
+          msgId,
+          mimeType: part.mimeType || "",
+          size: part.body.size || 0,
+        });
+      }
+      if (part.parts) scan(part.parts);
+    }
+  };
+  scan(payload?.parts);
+  return out;
+}
+
 
 const CLOSED_KEYWORDS = [
   "invoice", "invoiced", "payment received", "payment sent", "paid",
@@ -271,7 +293,7 @@ export default async function handler(req, res) {
   // Fetch each thread with headers + body parts (for brand extraction from body text)
   // labelIds: detect SENT messages regardless of From address/alias
   // internalDate: server-assigned Unix ms timestamp — more reliable than the Date header
-  const fields = "id,messages(id,snippet,labelIds,internalDate,payload(headers,mimeType,body(data),parts(mimeType,body(data),parts(mimeType,body(data)))))";
+  const fields = "id,messages(id,snippet,labelIds,internalDate,payload(headers,mimeType,body(data,attachmentId,size),parts(mimeType,filename,body(data,attachmentId,size),parts(mimeType,filename,body(data,attachmentId,size),parts(mimeType,filename,body(data,attachmentId,size))))))";
   const details = await Promise.all(
     threads.slice(0, 100).map(({ id }) =>
       gmailFetch(
@@ -399,10 +421,13 @@ export default async function handler(req, res) {
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
       const initials = brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
       const status = inferStatus(msgs, last, userEmail);
+      const attachments = msgs.flatMap((m) => getAttachments(m.payload, m.id));
 
       return {
         id: thread.id,
         brand,
+        senderIsAgency,
+        senderDomain: domain,
         logo: initials,
         logoColor: colors[colorIdx],
         domain: displayDomain,
@@ -410,27 +435,40 @@ export default async function handler(req, res) {
         firstReached: toISODate(firstDate),
         lastMessage: toISODate(lastDate),
         offer: cleanedSubject,
-        theirRate: null,
         yourRate: null,
         status,
         revenue: null,
         category: "",
         messageCount: msgs.length,
+        attachments,
         source: "gmail",
       };
     })
     .filter(Boolean);
 
-  // Deduplicate by brand name (not domain) so agency-managed deals stay separate.
-  // e.g. "Fresh Step" and "Petlibro" both emailed via autumncommunications.com
-  // should remain two distinct cards.
+  // Dedup key:
+  // - Non-agency senders: key by sender domain. Multiple threads from openfarmpet.com
+  //   all belong to the same brand regardless of whether the subject said "Open Farm"
+  //   or "Open Farm Pet". Domain is authoritative.
+  // - Agency senders: key by brand name. "Fresh Step" and "Petlibro" both sent via
+  //   autumncommunications.com must stay as separate cards.
+  const brandNameKey = (name) => name.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+  const dedupKey = (t) => t.senderIsAgency ? brandNameKey(t.brand) : t.senderDomain.toLowerCase();
+
   const grouped = {};
   for (const t of parsed) {
-    const key = t.brand.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+    const key = dedupKey(t);
     if (!grouped[key]) {
       grouped[key] = { ...t, subThreads: [] };
     } else {
       const g = grouped[key];
+      // Prefer the longer/more specific brand name (e.g. "Open Farm Pet" over "Open Farm")
+      if (t.brand.length > g.brand.length) {
+        g.brand = t.brand;
+        const ci = t.brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
+        g.logo = t.brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
+        g.logoColor = colors[ci];
+      }
       // Earliest first contact
       if (t.firstReached < g.firstReached) g.firstReached = t.firstReached;
       // Latest message wins for id, contact, offer, lastMessage, AND status.
@@ -448,6 +486,8 @@ export default async function handler(req, res) {
         g.subThreads.push({ id: t.id, offer: t.offer, lastMessage: t.lastMessage, contact: t.contact });
       }
       g.messageCount = (g.messageCount || 1) + (t.messageCount || 1);
+      // Merge attachments from all threads for this brand
+      g.attachments = [...(g.attachments || []), ...(t.attachments || [])];
     }
   }
 
