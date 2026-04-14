@@ -256,6 +256,10 @@ function inferStatus(msgs, lastMsg, userEmail) {
   // Closed if strong deal-completion signals
   if (CLOSED_KEYWORDS.some((kw) => allText.includes(kw))) return "closed";
 
+  // Pending if user hasn't replied yet (last message is from brand, not user)
+  const lastLabels = last?.labelIds || [];
+  if (!lastLabels.includes("SENT")) return "pending";
+
   return "active";
 }
 

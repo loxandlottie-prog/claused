@@ -147,9 +147,15 @@ textarea { resize: vertical; }
 .home-page { display: flex; flex-direction: column; gap: 20px; }
 
 /* Stat grid */
+.stats-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.stats-row .stat-grid { flex: 1; }
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 .stat-card {
@@ -191,8 +197,28 @@ textarea { resize: vertical; }
   color: var(--text);
   letter-spacing: -1px;
 }
-.stat-value-alert { color: var(--red); }
-.stat-value-green { color: var(--green); }
+.stat-value-alert     { color: var(--red); }
+.stat-value-green     { color: var(--green); }
+.stat-value-highlight { color: var(--yellow); }
+
+/* Date range select */
+.date-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CA3AF' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 28px 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: stretch;
+  transition: border-color 0.15s;
+}
+.date-select:hover { border-color: var(--primary); }
+.date-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent); }
 
 /* Filter bar */
 .filter-bar {
@@ -426,8 +452,10 @@ textarea { resize: vertical; }
   border-radius: 99px;
   padding: 1px 7px;
 }
-.section-header-urgent .section-count { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
-.section-header-active .section-count { color: var(--purple); border-color: var(--purple-mid); background: var(--purple-light); }
+.section-header-urgent  .section-count { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
+.section-header-active  .section-count { color: var(--purple); border-color: var(--purple-mid); background: var(--purple-light); }
+.section-header-pending { color: #B45309; }
+.section-header-pending .section-count { color: #B45309; border-color: #FDE68A; background: var(--yellow-dim); }
 .filter-count-green { background: #059669 !important; }
 
 /* Legacy closed-divider — keep for filter views */
@@ -1144,7 +1172,9 @@ textarea { resize: vertical; }
   .header-inner { padding: 0 16px; }
   .wordmark { margin-right: 16px; }
   .app-main { padding: 20px 16px 60px; }
-  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .stats-row { flex-direction: column; }
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+  .date-select { align-self: flex-start; }
   .compare-grid { grid-template-columns: 1fr 1fr; }
   .brand-card-main { flex-wrap: wrap; }
   .brand-dates { margin-left: 0; }

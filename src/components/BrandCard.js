@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
-  active:   { label: "Active",   cls: "status-blue"  },
-  closed:   { label: "Closed",   cls: "status-green" },
-  rejected: { label: "Rejected", cls: "status-gray"  },
+  pending:  { label: "Pending",  cls: "status-yellow" },
+  active:   { label: "Active",   cls: "status-blue"   },
+  closed:   { label: "Closed",   cls: "status-green"  },
+  rejected: { label: "Rejected", cls: "status-gray"   },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -384,7 +385,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                 </span>
               </div>
               <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
-                {thread.status === "active" && (
+                {thread.status === "pending" && (
                   <>
                     <button
                       className="card-action-btn card-action-accept"
