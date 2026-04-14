@@ -127,10 +127,26 @@ function toBrandInfo(contact, domain, subject, bodyText) {
   // No ^ anchor — brand name may appear anywhere in the subject
   // (e.g. "Collaboration Proposal: CATTASAURUS x Lox and Latke")
   if (clean) {
+    // "Brand x Creator" pattern
     const xMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+[xX×]\s+/);
     if (xMatch) return { brand: normalizeBrandName(xMatch[1].trim()), senderIsAgency: true };
-    // No /i flag — requires uppercase start so "fect" (after "Purr-") can't be a match start
-    const labelMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/);
+
+    // Pipe-separator pattern: "Open Farm Pet | Terms for Ambassador Program"
+    // The segment BEFORE the pipe is the brand name; the segment after describes the campaign.
+    const pipeIdx = clean.indexOf(" | ");
+    if (pipeIdx > 0) {
+      const beforePipe = clean.slice(0, pipeIdx).trim();
+      // Accept if it starts with a capital and isn't a generic phrase
+      if (beforePipe.length >= 2 && /^[A-Z]/.test(beforePipe) &&
+          !/^(re|fwd?|hi|hey|hello|thanks|update|news|offer|terms|collab|partnership|sponsorship|campaign|ambassador)\b/i.test(beforePipe)) {
+        return { brand: normalizeBrandName(beforePipe), senderIsAgency: true };
+      }
+    }
+
+    // "Brand Campaign/Partnership/Ambassador" pattern.
+    // No /i flag — requires uppercase start so "fect" (after "Purr-") can't be a match start.
+    // Exclude space from the match so it can't cross pipe-like boundaries or grab descriptor words.
+    const labelMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\-]{1,20}(?:\s[A-Z][A-Za-z0-9&'.\-]{1,20}){0,3}?)\s+(?:Campaign|Partnership|Collab(?:oration)?|Sponsorship|Ambassador)\b/);
     if (labelMatch) return { brand: normalizeBrandName(labelMatch[1].trim()), senderIsAgency: true };
   }
 
