@@ -907,9 +907,8 @@ textarea { resize: vertical; }
   top: calc(100% + 6px);
   right: 0;
 }
-.status-menu-up {
-  top: auto;
-  bottom: calc(100% + 6px);
+.status-menu-fixed {
+  position: fixed;
 }
 .status-menu {
   background: var(--surface);

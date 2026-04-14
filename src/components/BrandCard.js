@@ -231,7 +231,7 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
 
 export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [menuUp, setMenuUp] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef(null);
   const statusBtnRef = useRef(null);
@@ -290,7 +290,14 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                   onClick={() => {
                     if (!showStatusMenu) {
                       const rect = statusBtnRef.current?.getBoundingClientRect();
-                      setMenuUp(rect ? window.innerHeight - rect.bottom < 260 : false);
+                      if (rect) {
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        const menuHeight = 260;
+                        setMenuPos(spaceBelow >= menuHeight
+                          ? { top: rect.bottom + 6, right: window.innerWidth - rect.right }
+                          : { top: rect.top - menuHeight - 6, right: window.innerWidth - rect.right }
+                        );
+                      }
                     }
                     setShowStatusMenu((v) => !v);
                   }}
@@ -298,7 +305,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                   {s.label} ▾
                 </button>
                 {showStatusMenu && (
-                  <div className={`status-menu ${menuUp ? "status-menu-up" : ""}`}>
+                  <div className="status-menu status-menu-fixed" style={{ top: menuPos.top, right: menuPos.right }}>
                     {Object.entries(STATUS).map(([key, val]) => (
                       <button key={key}
                         className={`status-menu-item ${key === thread.status ? "status-menu-active" : ""}`}
