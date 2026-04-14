@@ -80,6 +80,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   const newCount         = dateFiltered.filter((t) => t.status === "new").length;
   const negotiatingCount = dateFiltered.filter((t) => t.status === "negotiating").length;
+  const confirmedCount   = dateFiltered.filter((t) => t.status === "confirmed").length;
   const completedCount   = dateFiltered.filter((t) => t.status === "completed").length;
   const paidCount        = dateFiltered.filter((t) => t.status === "paid").length;
 
@@ -99,11 +100,12 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   // Confirmed and Declined are not primary filter cards per spec
   const STAT_FILTERS = [
-    { key: "new",         label: "New",         count: newCount,            highlight: newCount > 0 },
-    { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false        },
-    { key: "completed",   label: "Completed",    count: completedCount,     highlight: false        },
-    { key: "paid",        label: "Paid",         count: paidCount,          highlight: true         },
-    { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false       },
+    { key: "new",         label: "New",         count: newCount,            highlight: newCount > 0        },
+    { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false               },
+    { key: "confirmed",   label: "Confirmed",    count: confirmedCount,     highlight: confirmedCount > 0  },
+    { key: "completed",   label: "Completed",    count: completedCount,     highlight: false               },
+    { key: "paid",        label: "Paid",         count: paidCount,          highlight: true                },
+    { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false              },
   ];
 
   if (threads.length === 0) {
