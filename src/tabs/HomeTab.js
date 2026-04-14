@@ -83,6 +83,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   const confirmedCount   = dateFiltered.filter((t) => t.status === "confirmed").length;
   const completedCount   = dateFiltered.filter((t) => t.status === "completed").length;
   const paidCount        = dateFiltered.filter((t) => t.status === "paid").length;
+  const declinedCount    = dateFiltered.filter((t) => t.status === "declined").length;
 
   const filtered = dateFiltered.filter((t) =>
     filter === "all" ? true : t.status === filter
@@ -105,6 +106,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     { key: "confirmed",   label: "Confirmed",    count: confirmedCount,     highlight: confirmedCount > 0  },
     { key: "completed",   label: "Completed",    count: completedCount,     highlight: false               },
     { key: "paid",        label: "Paid",         count: paidCount,          highlight: true                },
+    { key: "declined",    label: "Declined",     count: declinedCount,      highlight: false               },
     { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false              },
   ];
 
