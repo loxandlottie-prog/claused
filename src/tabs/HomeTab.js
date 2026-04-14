@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import BrandCard from "../components/BrandCard";
+import GoalBar from "../components/GoalBar";
 import { daysSince } from "../utils";
 
 const DATE_OPTIONS = [
@@ -80,6 +81,8 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   return (
     <div className="home-page">
+      <GoalBar threads={threads} />
+
       <div className="stats-row">
         <div className="stat-grid">
           {STAT_FILTERS.map((s) => (
