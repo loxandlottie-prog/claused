@@ -27,8 +27,9 @@ function saveGoal(year, data) {
 }
 
 function ProgressBar({ pct, achieved }) {
-  const color = achieved ? "#10B981" : pct >= 75 ? "#F59E0B" : "#0D9488";
-  const width  = Math.min(100, Math.max(0, pct));
+  const width = Math.min(100, Math.max(0, pct));
+  // All states use teal — deeper shade on achievement
+  const color = achieved ? "#0F766E" : "#0D9488";
   return (
     <div className="goal-track">
       <div className="goal-fill" style={{ width: `${width}%`, backgroundColor: color }} />
@@ -39,7 +40,7 @@ function ProgressBar({ pct, achieved }) {
 function GoalRow({ label, current, goal, unit, onEditGoal, editingThis, draftRef, onSave, onStartEdit }) {
   const pct      = goal > 0 ? Math.min(100, (current / goal) * 100) : 0;
   const achieved = goal > 0 && current >= goal;
-  const color    = achieved ? "var(--green)" : pct >= 75 ? "#F59E0B" : "var(--primary)";
+  const color    = achieved ? "#0F766E" : "var(--primary)";
 
   return (
     <div className="goal-row">

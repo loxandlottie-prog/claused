@@ -2,9 +2,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --purple: #0D9488;
+  /* Brand primary — teal from the Inbora logo */
+  --primary:       #0D9488;
+  --primary-light: #F0FDFA;
+  --primary-mid:   #99F6E4;
+
+  /* Aliases — --purple kept for backward compat */
+  --purple:       #0D9488;
   --purple-light: #F0FDFA;
-  --purple-mid: #99F6E4;
+  --purple-mid:   #99F6E4;
+
   --bg: #FAFAFA;
   --surface: #FFFFFF;
   --border: #E5E7EB;
@@ -12,14 +19,27 @@
   --text: #111827;
   --text2: #6B7280;
   --text3: #9CA3AF;
+
   --red: #EF4444;
   --red-dim: #FEF2F2;
+
+  /* Yellow/amber used only for semantic warnings (stale, follow-up flags) */
   --yellow: #F59E0B;
   --yellow-dim: #FFFBEB;
+
   --blue: #3B82F6;
   --blue-dim: #EFF6FF;
-  --green: #10B981;
+  --blue-mid: #BFDBFE;
+
+  /* Green = money/paid only */
+  --green: #059669;
   --green-dim: #ECFDF5;
+
+  /* Violet for Completed status */
+  --violet: #7C3AED;
+  --violet-dim: #F5F3FF;
+  --violet-mid: #DDD6FE;
+
   --radius: 12px;
   --radius-sm: 8px;
   --radius-xs: 6px;
@@ -80,7 +100,7 @@ textarea { resize: vertical; }
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #7C5CFC, #A78BFA);
+  background: linear-gradient(135deg, #0D9488, #06B6D4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -130,7 +150,7 @@ textarea { resize: vertical; }
   border-radius: var(--radius-sm);
   padding: 6px 16px;
   transition: opacity 0.12s;
-  box-shadow: 0 1px 4px rgba(124,92,252,0.3);
+  box-shadow: 0 1px 4px rgba(13,148,136,0.25);
 }
 .btn-primary:hover { opacity: 0.88; }
 
@@ -362,7 +382,7 @@ textarea { resize: vertical; }
 }
 .stat-value-alert     { color: var(--red); }
 .stat-value-green     { color: var(--green); }
-.stat-value-highlight { color: var(--yellow); }
+.stat-value-highlight { color: var(--primary); }
 
 /* Thread list bar (date filter) */
 .thread-list-bar {
@@ -620,12 +640,12 @@ textarea { resize: vertical; }
 .section-header-urgent      .section-count { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
 .section-header-active      .section-count { color: var(--purple); border-color: var(--purple-mid); background: var(--purple-light); }
 /* New status section headers */
-.section-header-new         { color: #B45309; }
-.section-header-new         .section-count { color: #B45309; border-color: #FDE68A; background: var(--yellow-dim); }
-.section-header-negotiating { color: var(--blue); }
-.section-header-negotiating .section-count { color: var(--blue); border-color: #BFDBFE; background: var(--blue-dim); }
-.section-header-confirmed   { color: var(--purple); }
-.section-header-confirmed   .section-count { color: var(--purple); border-color: var(--purple-mid); background: var(--purple-light); }
+.section-header-new         { color: var(--blue); }
+.section-header-new         .section-count { color: var(--blue); border-color: var(--blue-mid); background: var(--blue-dim); }
+.section-header-negotiating { color: var(--primary); }
+.section-header-negotiating .section-count { color: var(--primary); border-color: var(--primary-mid); background: var(--primary-light); }
+.section-header-confirmed   { color: #4338CA; }
+.section-header-confirmed   .section-count { color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; }
 .section-header-paid        { color: #065F46; }
 .section-header-paid        .section-count { color: #065F46; border-color: #A7F3D0; background: var(--green-dim); }
 
@@ -744,7 +764,7 @@ textarea { resize: vertical; }
   border-radius: 99px;
 }
 .rate-their { background: var(--bg); border: 1px solid var(--border); color: var(--text2); }
-.rate-product { background: #FFF7ED; border: 1px solid #FED7AA; color: #C2410C; }
+.rate-product { background: var(--bg); border: 1px solid var(--border); color: var(--text2); }
 .rate-yours { background: var(--purple-light); border: 1px solid var(--purple-mid); color: var(--purple); }
 .rate-closed { background: var(--green-dim); border: 1px solid #A7F3D0; color: #065F46; }
 
@@ -878,13 +898,13 @@ textarea { resize: vertical; }
   letter-spacing: 0.2px;
   white-space: nowrap;
 }
-.status-red    { background: var(--red-dim);    color: var(--red);    border: 1px solid #FECACA; }
-.status-yellow { background: var(--yellow-dim); color: #B45309;       border: 1px solid #FDE68A; }
-.status-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid #BFDBFE; }
-.status-green  { background: var(--green-dim);  color: #065F46;       border: 1px solid #A7F3D0; }
-.status-teal   { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-mid); }
-.status-purple { background: #F5F3FF;           color: #6D28D9;       border: 1px solid #DDD6FE; }
-.status-gray   { background: #F3F4F6;           color: #6B7280;       border: 1px solid #D1D5DB; }
+.status-red    { background: var(--red-dim);      color: var(--red);      border: 1px solid #FECACA; }
+.status-yellow { background: var(--blue-dim);    color: #1D4ED8;         border: 1px solid var(--blue-mid); }  /* "New" — blue */
+.status-blue   { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-mid); } /* "Negotiating" — teal */
+.status-green  { background: var(--green-dim);   color: #065F46;         border: 1px solid #A7F3D0; }   /* "Paid" — green */
+.status-teal   { background: #EEF2FF;            color: #4338CA;         border: 1px solid #C7D2FE; }   /* "Confirmed" — indigo */
+.status-purple { background: var(--violet-dim);  color: var(--violet);   border: 1px solid var(--violet-mid); } /* "Completed" — violet */
+.status-gray   { background: #F3F4F6;            color: #6B7280;         border: 1px solid #D1D5DB; }   /* "Declined" — gray */
 
 /* Status picker */
 .status-picker { position: relative; }
@@ -936,11 +956,11 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 .status-menu-dot.status-red    { background: var(--red); }
-.status-menu-dot.status-yellow { background: var(--yellow); }
-.status-menu-dot.status-blue   { background: var(--blue); }
-.status-menu-dot.status-green  { background: var(--green); }
-.status-menu-dot.status-teal   { background: var(--purple); }
-.status-menu-dot.status-purple { background: #7C3AED; }
+.status-menu-dot.status-yellow { background: var(--blue); }         /* New — blue */
+.status-menu-dot.status-blue   { background: var(--primary); }     /* Negotiating — teal */
+.status-menu-dot.status-green  { background: var(--green); }       /* Paid — green */
+.status-menu-dot.status-teal   { background: #4338CA; }            /* Confirmed — indigo */
+.status-menu-dot.status-purple { background: var(--violet); }      /* Completed — violet */
 .status-menu-dot.status-gray   { background: #9CA3AF; }
 .status-menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
 .status-menu-item-remove { color: var(--red); }
@@ -1032,7 +1052,7 @@ textarea { resize: vertical; }
   border-radius: 50%;
   flex-shrink: 0;
 }
-.legend-this { background: var(--purple); }
+.legend-this { background: var(--primary); }
 .legend-last { background: #D1D5DB; }
 
 .bar-chart {
@@ -1065,8 +1085,8 @@ textarea { resize: vertical; }
   min-height: 3px;
   transition: height 0.3s ease;
 }
-.bar-this-year { background: var(--purple); }
-.bar-this-year.bar-current { background: linear-gradient(180deg, #A78BFA, #7C5CFC); }
+.bar-this-year { background: var(--primary); }
+.bar-this-year.bar-current { background: linear-gradient(180deg, #2DD4BF, #0D9488); }
 .bar-this-year.bar-future { background: #E5E7EB; }
 .bar-last-year { background: #E5E7EB; }
 .bar-month {
@@ -1136,7 +1156,7 @@ textarea { resize: vertical; }
 }
 .cat-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7C5CFC, #A78BFA);
+  background: linear-gradient(90deg, #0D9488, #2DD4BF);
   border-radius: 99px;
   transition: width 0.3s ease;
 }
@@ -1224,7 +1244,7 @@ textarea { resize: vertical; }
   border-radius: var(--radius-sm);
   padding: 9px 20px;
   transition: opacity 0.12s;
-  box-shadow: 0 1px 4px rgba(124,92,252,0.3);
+  box-shadow: 0 1px 4px rgba(13,148,136,0.25);
 }
 .modal-btn-primary:hover { opacity: 0.88; }
 .modal-btn-ghost {
@@ -1307,7 +1327,7 @@ textarea { resize: vertical; }
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #7C5CFC, #A78BFA);
+  background: linear-gradient(135deg, #0D9488, #06B6D4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1336,7 +1356,7 @@ textarea { resize: vertical; }
   padding: 10px;
   width: 100%;
   transition: opacity 0.12s;
-  box-shadow: 0 1px 4px rgba(124,92,252,0.3);
+  box-shadow: 0 1px 4px rgba(13,148,136,0.25);
   margin-top: 4px;
 }
 .gate-submit:hover { opacity: 0.88; }
@@ -1370,8 +1390,8 @@ textarea { resize: vertical; }
   font-size: 12.5px;
   font-weight: 500;
   color: var(--text2);
-  background: var(--green-dim);
-  border: 1px solid #A7F3D0;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-mid);
   border-radius: 99px;
   padding: 4px 12px;
 }
@@ -1379,7 +1399,7 @@ textarea { resize: vertical; }
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--primary);
   flex-shrink: 0;
 }
 .gmail-disconnect {

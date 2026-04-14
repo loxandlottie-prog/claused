@@ -32,11 +32,26 @@ export default async function handler(req, res) {
     return res.redirect(302, `${base}/?gmail=error`);
   }
 
+  // Fetch the user's email to store in a cookie — used by API routes as the user identifier.
+  let userEmail = null;
+  try {
+    const infoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    if (infoRes.ok) {
+      const info = await infoRes.json();
+      userEmail = info.email || null;
+    }
+  } catch { /* non-fatal */ }
+
   const maxAge = 60 * 60 * 24 * 365;
   const cookieBase = `Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
   const cookies = [`gmail_access=${tokens.access_token}; ${cookieBase}`];
   if (tokens.refresh_token) {
     cookies.push(`gmail_refresh=${tokens.refresh_token}; ${cookieBase}`);
+  }
+  if (userEmail) {
+    cookies.push(`gmail_email=${encodeURIComponent(userEmail)}; ${cookieBase}`);
   }
   res.setHeader("Set-Cookie", cookies);
   res.redirect(302, `${base}/?gmail=connected`);

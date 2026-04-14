@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { threads as demoThreads } from "./data";
 import HomeTab from "./tabs/HomeTab";
@@ -6,61 +6,75 @@ import AnalyticsTab from "./tabs/AnalyticsTab";
 import PasteModal from "./components/PasteModal";
 import PasswordGate from "./components/PasswordGate";
 
-const OVERRIDES_KEY = "inbora_overrides";
-const BLOCKED_KEY   = "inbora_blocked";
+// ─── localStorage keys (used as instant write-through cache) ─────────────────
+const LS_OVERRIDES = "inbora_overrides_v2";
+const LS_BLOCKED   = "inbora_blocked_v2";
 
-// Dedup key mirrors threads.js logic — used to permanently block noise threads.
+// ─── Dedup key — mirrors api/gmail/threads.js logic ──────────────────────────
 const threadDedupKey = (t) =>
   t.senderIsAgency
     ? (t.brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim()
     : (t.senderDomain || "").toLowerCase();
 
-const getBlocked = () => {
-  try { return new Set(JSON.parse(localStorage.getItem(BLOCKED_KEY) || "[]")); }
-  catch { return new Set(); }
-};
-const addBlocked = (key) => {
-  const s = getBlocked(); s.add(key);
-  localStorage.setItem(BLOCKED_KEY, JSON.stringify([...s]));
-};
-
-const brandKey = (brand) =>
-  (brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-
+// ─── Status migration — maps legacy values to current schema ─────────────────
 const STATUS_MIGRATION = {
-  // Legacy pre-simplification values
   reply_needed: "new", you_replied: "negotiating", waiting_on_them: "negotiating",
   in_progress: "negotiating", accepted: "negotiating",
   deal_closed: "completed", deal_passed: "declined",
-  // Current values → new values
   pending: "new", active: "negotiating", closed: "completed", rejected: "declined",
 };
 
-const getOverrides = () => {
-  try {
-    const raw = JSON.parse(localStorage.getItem(OVERRIDES_KEY) || "{}");
-    // Migrate old status values to new simplified statuses
-    Object.values(raw).forEach((ov) => {
-      if (ov.status && STATUS_MIGRATION[ov.status]) ov.status = STATUS_MIGRATION[ov.status];
-    });
-    return raw;
-  } catch { return {}; }
-};
+function migrateStatuses(overridesMap) {
+  Object.values(overridesMap).forEach((ov) => {
+    if (ov.status && STATUS_MIGRATION[ov.status]) ov.status = STATUS_MIGRATION[ov.status];
+  });
+  return overridesMap;
+}
 
-const saveOverride = (key, updates) => {
-  const all = getOverrides();
-  all[key] = { ...all[key], ...updates };
-  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(all));
-};
+// ─── localStorage helpers ─────────────────────────────────────────────────────
+function lsGetOverrides() {
+  try { return migrateStatuses(JSON.parse(localStorage.getItem(LS_OVERRIDES) || "{}")); }
+  catch { return {}; }
+}
+function lsSetOverrides(map) {
+  localStorage.setItem(LS_OVERRIDES, JSON.stringify(map));
+}
+function lsGetBlocked() {
+  try { return new Set(JSON.parse(localStorage.getItem(LS_BLOCKED) || "[]")); }
+  catch { return new Set(); }
+}
+function lsSetBlocked(set) {
+  localStorage.setItem(LS_BLOCKED, JSON.stringify([...set]));
+}
 
-const applyOverrides = (threads) => {
-  const all = getOverrides();
+// ─── Server helpers (fire-and-forget — localStorage is the source of truth for
+//     instant UI updates; server is the durable, cross-device store) ───────────
+function serverSaveOverride(threadId, fullData) {
+  fetch("/api/overrides", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ thread_id: threadId, data: fullData }),
+  }).catch(console.error);
+}
+
+function serverAddBlocked(dedupKey) {
+  fetch("/api/blocked", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dedup_key: dedupKey }),
+  }).catch(console.error);
+}
+
+// ─── Apply overrides from a map to a list of threads ─────────────────────────
+function applyOverrides(threads, overridesMap) {
   return threads.map((t) => {
-    const ov = all[brandKey(t.brand)];
+    const ov = overridesMap[t.id];
     if (!ov) return t;
+    // Deep merge contact so partial contact updates don't wipe other contact fields
+    if (ov.contact) return { ...t, ...ov, contact: { ...t.contact, ...ov.contact } };
     return { ...t, ...ov };
   });
-};
+}
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(
@@ -74,17 +88,73 @@ export default function App() {
   const [gmail, setGmail] = useState({ connected: false, email: null, loading: true });
   const [gmailError, setGmailError] = useState(false);
 
+  // In-memory overrides map: { thread_id: { status, yourRate, ... } }
+  // This is the single source of truth for unsaved state; kept in sync with
+  // localStorage (instant) and the server (durable).
+  const overridesRef = useRef(lsGetOverrides());
+  const blockedRef   = useRef(lsGetBlocked());
+
+  // ─── Persist an override for one thread ────────────────────────────────────
+  const persistOverride = (threadId, updates) => {
+    const current = overridesRef.current[threadId] || {};
+    // Deep merge contact
+    const merged = updates.contact
+      ? { ...current, ...updates, contact: { ...(current.contact || {}), ...updates.contact } }
+      : { ...current, ...updates };
+    overridesRef.current[threadId] = merged;
+    lsSetOverrides(overridesRef.current);    // instant cache
+    serverSaveOverride(threadId, merged);    // durable store
+  };
+
+  // ─── Persist a blocked thread ───────────────────────────────────────────────
+  const persistBlocked = (dedupKey) => {
+    blockedRef.current.add(dedupKey);
+    lsSetBlocked(blockedRef.current);
+    serverAddBlocked(dedupKey);
+  };
+
+  // ─── Load Gmail threads + server overrides/blocked ─────────────────────────
+  const loadGmailThreads = async () => {
+    try {
+      // Load server overrides and blocked in parallel with Gmail threads
+      const [gmailData, serverOverrides, serverBlocked] = await Promise.all([
+        fetch("/api/gmail/threads").then((r) => {
+          if (r.status === 401) throw new Error("not_connected");
+          return r.json();
+        }),
+        fetch("/api/overrides").then((r) => r.ok ? r.json() : null).catch(() => null),
+        fetch("/api/blocked").then((r) => r.ok ? r.json() : null).catch(() => null),
+      ]);
+
+      // Server data wins — sync into memory and localStorage cache
+      if (serverOverrides) {
+        overridesRef.current = migrateStatuses(serverOverrides);
+        lsSetOverrides(overridesRef.current);
+      }
+      if (serverBlocked) {
+        blockedRef.current = new Set(serverBlocked);
+        lsSetBlocked(blockedRef.current);
+      }
+
+      const filtered = gmailData.filter((t) => !blockedRef.current.has(threadDedupKey(t)));
+      const withOverrides = applyOverrides(filtered, overridesRef.current);
+
+      setThreads((prev) => {
+        const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
+        return [...withOverrides, ...manualThreads];
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Check connection status + handle OAuth return
   useEffect(() => {
     if (!unlocked) return;
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("gmail") === "error") setGmailError(true);
-
-    // Clean up URL
-    if (params.has("gmail")) {
-      window.history.replaceState({}, "", window.location.pathname);
-    }
+    if (params.has("gmail")) window.history.replaceState({}, "", window.location.pathname);
 
     fetch("/api/auth/status")
       .then((r) => r.json())
@@ -95,39 +165,12 @@ export default function App() {
       .catch(() => setGmail({ connected: false, email: null, loading: false }));
   }, [unlocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadGmailThreads = () => {
-    fetch("/api/gmail/threads")
-      .then((r) => {
-        if (r.status === 401) throw new Error("not_connected");
-        return r.json();
-      })
-      .then((gmailData) => {
-        const blocked = getBlocked();
-        const filtered = gmailData.filter((t) => !blocked.has(threadDedupKey(t)));
-        const withOverrides = applyOverrides(filtered);
-        setThreads((prev) => {
-          const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
-          return [...withOverrides, ...manualThreads];
-        });
-      })
-      .catch(console.error);
-  };
-
-  const handleConnect = () => {
-    window.location.href = "/api/auth/google";
-  };
-
-  const handleDisconnect = () => {
-    window.location.href = "/api/auth/disconnect";
-  };
+  const handleConnect = () => { window.location.href = "/api/auth/google"; };
+  const handleDisconnect = () => { window.location.href = "/api/auth/disconnect"; };
 
   const handleStatusChange = (id, newStatus) => {
-    setThreads((prev) => {
-      const next = prev.map((t) => t.id === id ? { ...t, status: newStatus } : t);
-      const changed = next.find((t) => t.id === id);
-      if (changed) saveOverride(brandKey(changed.brand), { status: newStatus });
-      return next;
-    });
+    setThreads((prev) => prev.map((t) => t.id === id ? { ...t, status: newStatus } : t));
+    persistOverride(id, { status: newStatus });
   };
 
   const handleThreadAdd = (thread) => {
@@ -137,26 +180,18 @@ export default function App() {
   const handleNotADeal = (id) => {
     setThreads((prev) => {
       const thread = prev.find((t) => t.id === id);
-      if (thread) addBlocked(threadDedupKey(thread));
+      if (thread) persistBlocked(threadDedupKey(thread));
       return prev.filter((t) => t.id !== id);
     });
   };
 
   const handleFieldChange = (id, updates) => {
-    setThreads((prev) => {
-      const next = prev.map((t) => {
-        if (t.id !== id) return t;
-        // Deep merge contact if updating contact fields
-        if (updates.contact) return { ...t, contact: { ...t.contact, ...updates.contact } };
-        return { ...t, ...updates };
-      });
-      const changed = next.find((t) => t.id === id);
-      if (changed) {
-        const key = brandKey(changed.brand);
-        if (key) saveOverride(key, updates);
-      }
-      return next;
-    });
+    setThreads((prev) => prev.map((t) => {
+      if (t.id !== id) return t;
+      if (updates.contact) return { ...t, contact: { ...t.contact, ...updates.contact } };
+      return { ...t, ...updates };
+    }));
+    persistOverride(id, updates);
   };
 
   const handleDeliverableToggle = (threadId, deliverableId) => {
@@ -169,7 +204,7 @@ export default function App() {
         return { ...t, deliverables };
       });
       const changed = next.find((t) => t.id === threadId);
-      if (changed) saveOverride(brandKey(changed.brand), { deliverables: changed.deliverables });
+      if (changed) persistOverride(threadId, { deliverables: changed.deliverables });
       return next;
     });
   };
@@ -182,7 +217,7 @@ export default function App() {
         return { ...t, deliverables };
       });
       const changed = next.find((t) => t.id === threadId);
-      if (changed) saveOverride(brandKey(changed.brand), { deliverables: changed.deliverables });
+      if (changed) persistOverride(threadId, { deliverables: changed.deliverables });
       return next;
     });
   };
