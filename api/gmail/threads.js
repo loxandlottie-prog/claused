@@ -131,16 +131,30 @@ function toBrandInfo(contact, domain, subject, bodyText) {
     const xMatch = clean.match(/\b([A-Z][A-Za-z0-9&'.\- ]{1,30}?)\s+[xX×]\s+/);
     if (xMatch) return { brand: normalizeBrandName(xMatch[1].trim()), senderIsAgency: true };
 
-    // Pipe-separator pattern: "Open Farm Pet | Terms for Ambassador Program"
-    // The segment BEFORE the pipe is the brand name; the segment after describes the campaign.
+    // Pipe-separator: subjects use " | " to divide brand/product from campaign description.
+    // Two common formats:
+    //   "Open Farm Pet | Terms for Ambassador Program"  → brand is the whole before-pipe
+    //   "Paid Collaboration with Smartmi | Air Purifier" → brand follows "with" before the pipe
     const pipeIdx = clean.indexOf(" | ");
     if (pipeIdx > 0) {
       const beforePipe = clean.slice(0, pipeIdx).trim();
-      // Accept if it starts with a capital and isn't a generic phrase
-      if (beforePipe.length >= 2 && /^[A-Z]/.test(beforePipe) &&
-          !/^(re|fwd?|hi|hey|hello|thanks|update|news|offer|terms|collab|partnership|sponsorship|campaign|ambassador)\b/i.test(beforePipe)) {
+
+      // Format A: "[descriptor] with BrandName | [product]"
+      const withMatch = beforePipe.match(/\bwith\s+([A-Z][A-Za-z0-9&'.\-]+(?:\s[A-Z][A-Za-z0-9&'.\-]+)*)\s*$/);
+      if (withMatch) {
+        return { brand: normalizeBrandName(withMatch[1].trim()), senderIsAgency: true };
+      }
+
+      // Format B: "BrandName | [description]" — entire before-pipe is the brand.
+      // Only accept if short (≤ 4 words), starts with a capital, doesn't start OR end
+      // with a generic descriptor word (which would mean it's a phrase, not a name).
+      const wordCount = beforePipe.split(/\s+/).length;
+      const STARTS_GENERIC = /^(re|fwd?|hi|hey|hello|thanks|update|offer|terms|collab|collaboration|partnership|sponsorship|campaign|ambassador|paid|sponsored|gifted|exciting|new|quick|important)\b/i;
+      const ENDS_GENERIC   = /\b(campaign|partnership|collaboration|collab|sponsorship|ambassador|opportunity|program|deal|offer|proposal|update)\s*$/i;
+      if (wordCount <= 4 && /^[A-Z]/.test(beforePipe) && !STARTS_GENERIC.test(beforePipe) && !ENDS_GENERIC.test(beforePipe)) {
         return { brand: normalizeBrandName(beforePipe), senderIsAgency: true };
       }
+      // Otherwise fall through — body extraction handles descriptive before-pipe segments
     }
 
     // "Brand Campaign/Partnership/Ambassador" pattern.
