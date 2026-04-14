@@ -93,14 +93,9 @@ export default function GoalBar({ threads }) {
 
   useEffect(() => { setGoalData(loadGoal(year)); }, [year]);
 
-  // Closed deals this year — check either firstReached or lastMessage year
-  const yearStr = String(year);
-  const closedThisYear = threads.filter(
-    (t) => t.status === "closed" &&
-      ((t.lastMessage || "").startsWith(yearStr) || (t.firstReached || "").startsWith(yearStr))
-  );
-  const earned      = closedThisYear.reduce((sum, t) => sum + (t.yourRate || 0), 0);
-  const closedCount = closedThisYear.length;
+  const closedDeals = threads.filter((t) => t.status === "closed");
+  const earned      = closedDeals.reduce((sum, t) => sum + (t.yourRate || 0), 0);
+  const closedCount = closedDeals.length;
 
   const update = (changes) => {
     const next = { ...goalData, ...changes };
