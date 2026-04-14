@@ -462,13 +462,6 @@ export default async function handler(req, res) {
       grouped[key] = { ...t, subThreads: [] };
     } else {
       const g = grouped[key];
-      // Prefer the longer/more specific brand name (e.g. "Open Farm Pet" over "Open Farm")
-      if (t.brand.length > g.brand.length) {
-        g.brand = t.brand;
-        const ci = t.brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;
-        g.logo = t.brand.replace(/[^A-Za-z ]/g, "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
-        g.logoColor = colors[ci];
-      }
       // Earliest first contact
       if (t.firstReached < g.firstReached) g.firstReached = t.firstReached;
       // Latest message wins for id, contact, offer, lastMessage, AND status.
