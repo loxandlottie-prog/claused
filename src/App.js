@@ -28,8 +28,12 @@ const brandKey = (brand) =>
   (brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
 
 const STATUS_MIGRATION = {
-  reply_needed: "pending", you_replied: "active", waiting_on_them: "active",
-  in_progress: "active", accepted: "active", deal_closed: "closed", deal_passed: "rejected",
+  // Legacy pre-simplification values
+  reply_needed: "new", you_replied: "negotiating", waiting_on_them: "negotiating",
+  in_progress: "negotiating", accepted: "negotiating",
+  deal_closed: "completed", deal_passed: "declined",
+  // Current values → new values
+  pending: "new", active: "negotiating", closed: "completed", rejected: "declined",
 };
 
 const getOverrides = () => {

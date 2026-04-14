@@ -74,7 +74,7 @@ function GoalRow({ label, current, goal, unit, onEditGoal, editingThis, draftRef
         <span className="goal-count">
           {unit === "$"
             ? (current === 0 ? "No revenue yet" : `${Math.round(pct)}% to goal`)
-            : (current === 0 ? "No deals closed yet" : `${current} deal${current !== 1 ? "s" : ""} closed`)}
+            : (current === 0 ? "No deals paid yet" : `${current} deal${current !== 1 ? "s" : ""} paid`)}
         </span>
         <span className="goal-pct" style={{ color }}>
           {achieved ? "Goal reached ✓" : goal != null ? `${Math.round(pct)}%` : ""}
@@ -93,9 +93,9 @@ export default function GoalBar({ threads }) {
 
   useEffect(() => { setGoalData(loadGoal(year)); }, [year]);
 
-  const closedDeals = threads.filter((t) => t.status === "closed");
-  const earned      = closedDeals.reduce((sum, t) => sum + (t.yourRate || 0), 0);
-  const closedCount = closedDeals.length;
+  const paidDeals   = threads.filter((t) => t.status === "paid");
+  const earned      = paidDeals.reduce((sum, t) => sum + (t.yourRate || 0), 0);
+  const closedCount = paidDeals.length;
 
   const update = (changes) => {
     const next = { ...goalData, ...changes };
@@ -173,7 +173,7 @@ export default function GoalBar({ threads }) {
 
       {(mode === "count" || mode === "both") && (
         <GoalRow
-          label="Deals closed"
+          label="Deals paid"
           current={closedCount}
           goal={goalData.count}
           unit="#"

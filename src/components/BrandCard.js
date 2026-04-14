@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { daysSince, formatCurrency, fmtDate } from "../utils";
 
 const STATUS = {
-  pending:  { label: "Pending",  cls: "status-yellow" },
-  active:   { label: "Active",   cls: "status-blue"   },
-  closed:   { label: "Closed",   cls: "status-green"  },
-  rejected: { label: "Rejected", cls: "status-gray"   },
+  new:         { label: "New",         cls: "status-yellow"  },
+  negotiating: { label: "Negotiating", cls: "status-blue"    },
+  confirmed:   { label: "Confirmed",   cls: "status-teal"    },
+  completed:   { label: "Completed",   cls: "status-purple"  },
+  paid:        { label: "Paid",        cls: "status-green"   },
+  declined:    { label: "Declined",    cls: "status-gray"    },
 };
 
 const LOGO_SOURCES = (domain) => [
@@ -385,21 +387,21 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                 </span>
               </div>
               <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
-                {thread.status === "pending" && (
+                {thread.status === "new" && (
                   <>
                     <button
                       className="card-action-btn card-action-accept"
-                      onClick={() => onStatusChange(thread.id, "active")}
-                      title="Accept deal"
+                      onClick={() => onStatusChange(thread.id, "negotiating")}
+                      title="Start negotiating"
                     >
-                      ✓ Accept
+                      ✓ Engage
                     </button>
                     <button
                       className="card-action-btn card-action-reject"
-                      onClick={() => onStatusChange(thread.id, "rejected")}
-                      title="Reject deal"
+                      onClick={() => onStatusChange(thread.id, "declined")}
+                      title="Decline deal"
                     >
-                      ✕ Reject
+                      ✕ Decline
                     </button>
                   </>
                 )}

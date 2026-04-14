@@ -116,7 +116,7 @@ export default function AnalyticsTab() {
             lastYear={lastYear.totalBrands}
           />
           <StatCompare
-            label="Deals closed"
+            label="Deals paid"
             thisYear={thisYear.dealsClosedCount}
             lastYear={lastYear.dealsClosedCount}
           />

@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { parseThread } from "../utils";
 
 const STATUS_OPTIONS = [
-  { value: "active",   label: "Active"   },
-  { value: "closed",   label: "Closed"   },
-  { value: "rejected", label: "Rejected" },
+  { value: "new",         label: "New"         },
+  { value: "negotiating", label: "Negotiating" },
+  { value: "confirmed",   label: "Confirmed"   },
+  { value: "completed",   label: "Completed"   },
+  { value: "paid",        label: "Paid"        },
+  { value: "declined",    label: "Declined"    },
 ];
 
 const COLORS = [
@@ -41,7 +44,7 @@ function emptyForm() {
     yourRate: "",
     revenue: "",
     notes: "",
-    status: "active",
+    status: "new",
   };
 }
 

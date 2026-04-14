@@ -11,20 +11,58 @@ const DATE_OPTIONS = [
   { key: "1y",  label: "1 year",   days: 365  },
 ];
 
+const STATUS_TIPS = [
+  { label: "New",         tip: "Inbound opportunity — you haven't meaningfully engaged yet."          },
+  { label: "Negotiating", tip: "Active back-and-forth on rates, deliverables, or terms."              },
+  { label: "Confirmed",   tip: "Deal agreed. Scope, rate, and terms are locked in."                   },
+  { label: "Completed",   tip: "Deliverables done, but payment may still be outstanding."             },
+  { label: "Paid",        tip: "Payment received. The deal is fully finished."                        },
+  { label: "Declined",    tip: "Deal is dead — you passed, they passed, or it fell through."          },
+];
+
 // Lower score = shown first.
 function priorityScore(t) {
-  const days = daysSince(t.lastMessage);
+  const days  = daysSince(t.lastMessage);
   const value = typeof t.yourRate === "number" && t.yourRate > 0 ? t.yourRate : 0;
   const valueBoost   = Math.min(500, value / 10);
   const stalePenalty = days > 21 ? Math.min(300, (days - 21) * 4) : 0;
 
   switch (t.status) {
-    case "pending":  return 500  + stalePenalty;
-    case "active":   return 1000 - valueBoost + stalePenalty;
-    case "closed":   return 9000;
-    case "rejected": return 9500;
-    default:         return 5000 + stalePenalty;
+    case "new":         return 500  + stalePenalty;
+    case "negotiating": return 1000 - valueBoost + stalePenalty;
+    case "confirmed":   return 2000 - valueBoost;
+    case "completed":   return 9000;
+    case "paid":        return 9500;
+    case "declined":    return 9800;
+    default:            return 5000 + stalePenalty;
   }
+}
+
+function StatusLegend() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="status-legend-wrap">
+      <button
+        className="status-legend-btn"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Status definitions"
+      >
+        ⓘ
+      </button>
+      {open && (
+        <div className="status-legend-tooltip">
+          {STATUS_TIPS.map((s) => (
+            <div key={s.label} className="status-tip-row">
+              <span className="status-tip-label">{s.label}</span>
+              <span className="status-tip-text">{s.tip}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail }) {
@@ -40,30 +78,32 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     ? threads.filter((t) => (t.firstReached || "") >= cutoff)
     : threads;
 
-  const pendingCount  = dateFiltered.filter((t) => t.status === "pending").length;
-  const activeCount   = dateFiltered.filter((t) => t.status === "active").length;
-  const closedCount   = dateFiltered.filter((t) => t.status === "closed").length;
-  const rejectedCount = dateFiltered.filter((t) => t.status === "rejected").length;
+  const newCount         = dateFiltered.filter((t) => t.status === "new").length;
+  const negotiatingCount = dateFiltered.filter((t) => t.status === "negotiating").length;
+  const completedCount   = dateFiltered.filter((t) => t.status === "completed").length;
+  const paidCount        = dateFiltered.filter((t) => t.status === "paid").length;
 
   const filtered = dateFiltered.filter((t) =>
     filter === "all" ? true : t.status === filter
   );
   const sorted = [...filtered].sort((a, b) => priorityScore(a) - priorityScore(b));
 
-  const pendingDeals  = sorted.filter((t) => t.status === "pending");
-  const activeDeals   = sorted.filter((t) => t.status === "active");
-  const closedDeals   = sorted.filter((t) => t.status === "closed");
-  const rejectedDeals = sorted.filter((t) => t.status === "rejected");
+  const newDeals         = sorted.filter((t) => t.status === "new");
+  const negotiatingDeals = sorted.filter((t) => t.status === "negotiating");
+  const confirmedDeals   = sorted.filter((t) => t.status === "confirmed");
+  const completedDeals   = sorted.filter((t) => t.status === "completed");
+  const paidDeals        = sorted.filter((t) => t.status === "paid");
+  const declinedDeals    = sorted.filter((t) => t.status === "declined");
 
   const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail };
 
-  // Pending first (needs action), then pipeline, then outcomes, total last as summary
+  // Confirmed and Declined are not primary filter cards per spec
   const STAT_FILTERS = [
-    { key: "pending",  label: "Pending",  count: pendingCount,        highlight: pendingCount > 0  },
-    { key: "active",   label: "Active",   count: activeCount,         highlight: false             },
-    { key: "closed",   label: "Closed",   count: closedCount,         highlight: true              },
-    { key: "rejected", label: "Rejected", count: rejectedCount,       highlight: false             },
-    { key: "all",      label: "Total",    count: dateFiltered.length, highlight: false             },
+    { key: "new",         label: "New",         count: newCount,            highlight: newCount > 0 },
+    { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false        },
+    { key: "completed",   label: "Completed",    count: completedCount,     highlight: false        },
+    { key: "paid",        label: "Paid",         count: paidCount,          highlight: true         },
+    { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false       },
   ];
 
   if (threads.length === 0) {
@@ -82,19 +122,22 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     <div className="home-page">
       <GoalBar threads={threads} />
 
-      <div className="stat-grid">
-        {STAT_FILTERS.map((s) => (
-          <button
-            key={s.key}
-            className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
-            onClick={() => setFilter(s.key)}
-          >
-            <span className="stat-label">{s.label}</span>
-            <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-highlight" : ""}`}>
-              {s.count}
-            </span>
-          </button>
-        ))}
+      <div className="stat-grid-row">
+        <div className="stat-grid">
+          {STAT_FILTERS.map((s) => (
+            <button
+              key={s.key}
+              className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
+              onClick={() => setFilter(s.key)}
+            >
+              <span className="stat-label">{s.label}</span>
+              <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-highlight" : ""}`}>
+                {s.count}
+              </span>
+            </button>
+          ))}
+        </div>
+        <StatusLegend />
       </div>
 
       <div className="thread-list-bar">
@@ -116,36 +159,52 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
           sorted.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)
         ) : (
           <>
-            {pendingDeals.length > 0 && (
+            {newDeals.length > 0 && (
               <>
-                <div className="section-header section-header-pending">
-                  Pending <span className="section-count">{pendingDeals.length}</span>
+                <div className="section-header section-header-new">
+                  New <span className="section-count">{newDeals.length}</span>
                 </div>
-                {pendingDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+                {newDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-            {activeDeals.length > 0 && (
+            {negotiatingDeals.length > 0 && (
               <>
-                <div className="section-header">
-                  Active <span className="section-count">{activeDeals.length}</span>
+                <div className="section-header section-header-negotiating">
+                  Negotiating <span className="section-count">{negotiatingDeals.length}</span>
                 </div>
-                {activeDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+                {negotiatingDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-            {closedDeals.length > 0 && (
+            {confirmedDeals.length > 0 && (
+              <>
+                <div className="section-header section-header-confirmed">
+                  Confirmed <span className="section-count">{confirmedDeals.length}</span>
+                </div>
+                {confirmedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+            {completedDeals.length > 0 && (
               <>
                 <div className="section-header section-header-muted">
-                  Closed <span className="section-count">{closedDeals.length}</span>
+                  Completed <span className="section-count">{completedDeals.length}</span>
                 </div>
-                {closedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+                {completedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-            {rejectedDeals.length > 0 && (
+            {paidDeals.length > 0 && (
+              <>
+                <div className="section-header section-header-paid">
+                  Paid <span className="section-count">{paidDeals.length}</span>
+                </div>
+                {paidDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+              </>
+            )}
+            {declinedDeals.length > 0 && (
               <>
                 <div className="section-header section-header-muted">
-                  Rejected <span className="section-count">{rejectedDeals.length}</span>
+                  Declined <span className="section-count">{declinedDeals.length}</span>
                 </div>
-                {rejectedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+                {declinedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
           </>
