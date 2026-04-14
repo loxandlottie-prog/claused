@@ -906,6 +906,12 @@ textarea { resize: vertical; }
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
+}
+.status-menu-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.status-menu {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

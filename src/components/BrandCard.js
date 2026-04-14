@@ -231,8 +231,10 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
 
 export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef(null);
+  const statusBtnRef = useRef(null);
 
   useEffect(() => {
     if (!showStatusMenu) return;
@@ -283,13 +285,20 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
             <div className="brand-top-right">
               <div className="status-picker" onClick={(e) => e.stopPropagation()}>
                 <button
+                  ref={statusBtnRef}
                   className={`status-badge ${s.cls} status-badge-btn`}
-                  onClick={() => setShowStatusMenu((v) => !v)}
+                  onClick={() => {
+                    if (!showStatusMenu) {
+                      const rect = statusBtnRef.current?.getBoundingClientRect();
+                      setMenuUp(rect ? window.innerHeight - rect.bottom < 260 : false);
+                    }
+                    setShowStatusMenu((v) => !v);
+                  }}
                 >
                   {s.label} ▾
                 </button>
                 {showStatusMenu && (
-                  <div className="status-menu">
+                  <div className={`status-menu ${menuUp ? "status-menu-up" : ""}`}>
                     {Object.entries(STATUS).map(([key, val]) => (
                       <button key={key}
                         className={`status-menu-item ${key === thread.status ? "status-menu-active" : ""}`}
