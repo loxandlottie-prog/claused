@@ -365,6 +365,7 @@ export default async function handler(req, res) {
       // "first" must be the first message FROM THE BRAND — never from us.
       // If internalDate is missing/zero on sent messages they'd sort to position 0
       // and make first = our own email, triggering the gmail.com SKIP_DOMAINS filter.
+      const allSent = msgs.every((m) => (m.labelIds || []).includes("SENT"));
       const firstBrand = msgs.find((m) => !(m.labelIds || []).includes("SENT")) || msgs[0];
 
       // Gmail returns messages in chronological order — the last element is always the most recent.
@@ -390,8 +391,11 @@ export default async function handler(req, res) {
         return 0;
       };
 
-      const fromRaw = getHeader(firstBrand, "From");
-      const subject = getHeader(firstBrand, "Subject");
+      // For user-initiated threads (no brand reply yet), flip to use the To header
+      // so we get the brand's email/domain rather than filtering on gmail.com.
+      const firstMsg = msgs[0];
+      const fromRaw = allSent ? getHeader(firstMsg, "To") : getHeader(firstBrand, "From");
+      const subject = getHeader(allSent ? firstMsg : firstBrand, "Subject");
       const firstTs = scanTs(msgs, msgs.indexOf(firstBrand));
       const firstDate = firstTs > 0 ? new Date(firstTs).toISOString() : getHeader(firstBrand, "Date");
       const lastTs = scanTs(msgs, msgs.length - 1);
@@ -401,8 +405,9 @@ export default async function handler(req, res) {
       const domain = contact.email.split("@")[1] || "";
 
       if (SKIP_DOMAINS.has(domain)) return null;
-      const localPart = contact.email.split("@")[0];
-      if (SKIP_LOCAL.test(localPart)) return null;
+      // For user-initiated outreach don't filter on local part — the user deliberately
+      // emailed this address (e.g. partnerships@brand.com, hello@brand.com).
+      if (!allSent && SKIP_LOCAL.test(contact.email.split("@")[0])) return null;
       if (!contact.email.includes("@")) return null;
 
       const cleanedSubject = stripSubjectPrefixes(subject);
@@ -411,11 +416,11 @@ export default async function handler(req, res) {
       // (newsletter blasts, platform welcome emails, Instagram growth pitches, etc.)
       const NOISE_SUBJECT = /\b(welcome to\b|insider update\b|grow your (following|instagram|tiktok|audience|account)\b|invitation to join\b|casting (opps?|opportunities?)\b|join our (program|platform|network)\b|unsubscribe\b)/i;
       if (NOISE_SUBJECT.test(cleanedSubject || subject)) return null;
-      // Concatenate body text from all messages for brand extraction
-      // Only use received messages for body extraction — never the user's own replies,
-      // which can contain product mentions and rates that would pollute brand/offer detection.
+      // For user-initiated threads, use the sent body for brand extraction.
+      // Otherwise use only received messages to avoid polluting brand/offer detection.
       const receivedMsgs = msgs.filter((m) => !(m.labelIds || []).includes("SENT"));
-      const allBodyText = receivedMsgs.map((m) => getTextBody(m.payload)).join("\n");
+      const bodyMsgs = allSent ? msgs : receivedMsgs;
+      const allBodyText = bodyMsgs.map((m) => getTextBody(m.payload)).join("\n");
       const { brand, senderIsAgency } = toBrandInfo(contact, domain, subject, allBodyText);
       const displayDomain = senderIsAgency ? guessBrandDomain(brand) : domain;
       const colorIdx = brand.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % colors.length;

@@ -20,7 +20,7 @@ function priorityScore(t) {
   }
 }
 
-export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
+export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail }) {
   const [filter, setFilter] = useState("all");
   const [year, setYear] = useState("all");
 
@@ -46,7 +46,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   const closedDeals   = sorted.filter((t) => t.status === "closed");
   const rejectedDeals = sorted.filter((t) => t.status === "rejected");
 
-  const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail };
+  const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail };
 
   const STAT_FILTERS = [
     { key: "all",      label: "Total brands", count: yearFiltered.length, highlight: false },

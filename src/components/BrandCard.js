@@ -226,7 +226,7 @@ function Deliverables({ deliverables, threadId, onToggle, onAdd }) {
   );
 }
 
-export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, gmailEmail }) {
+export default function BrandCard({ thread, onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef(null);
@@ -296,6 +296,13 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                         {val.label}
                       </button>
                     ))}
+                    <div className="status-menu-sep" />
+                    <button
+                      className="status-menu-item status-menu-item-remove"
+                      onClick={() => { onNotADeal(thread.id); setShowStatusMenu(false); }}
+                    >
+                      ✕ Not a brand deal
+                    </button>
                   </div>
                 )}
               </div>

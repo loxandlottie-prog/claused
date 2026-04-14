@@ -683,6 +683,9 @@ textarea { resize: vertical; }
 .status-menu-dot.status-yellow { background: var(--yellow); }
 .status-menu-dot.status-blue   { background: var(--blue); }
 .status-menu-dot.status-green  { background: var(--green); }
+.status-menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
+.status-menu-item-remove { color: var(--red); }
+.status-menu-item-remove:hover { background: #fee2e2; color: var(--red); }
 
 /* ─── Analytics Page ─────────────────────────────────────────── */
 .analytics-page { display: flex; flex-direction: column; gap: 28px; }

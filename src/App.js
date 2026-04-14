@@ -7,6 +7,22 @@ import PasteModal from "./components/PasteModal";
 import PasswordGate from "./components/PasswordGate";
 
 const OVERRIDES_KEY = "inbora_overrides";
+const BLOCKED_KEY   = "inbora_blocked";
+
+// Dedup key mirrors threads.js logic — used to permanently block noise threads.
+const threadDedupKey = (t) =>
+  t.senderIsAgency
+    ? (t.brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim()
+    : (t.senderDomain || "").toLowerCase();
+
+const getBlocked = () => {
+  try { return new Set(JSON.parse(localStorage.getItem(BLOCKED_KEY) || "[]")); }
+  catch { return new Set(); }
+};
+const addBlocked = (key) => {
+  const s = getBlocked(); s.add(key);
+  localStorage.setItem(BLOCKED_KEY, JSON.stringify([...s]));
+};
 
 const brandKey = (brand) =>
   (brand || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
@@ -82,7 +98,9 @@ export default function App() {
         return r.json();
       })
       .then((gmailData) => {
-        const withOverrides = applyOverrides(gmailData);
+        const blocked = getBlocked();
+        const filtered = gmailData.filter((t) => !blocked.has(threadDedupKey(t)));
+        const withOverrides = applyOverrides(filtered);
         setThreads((prev) => {
           const manualThreads = prev.filter((t) => t.source !== "gmail" && !demoThreads.find((d) => d.id === t.id));
           return [...withOverrides, ...manualThreads];
@@ -110,6 +128,14 @@ export default function App() {
 
   const handleThreadAdd = (thread) => {
     setThreads((prev) => [thread, ...prev]);
+  };
+
+  const handleNotADeal = (id) => {
+    setThreads((prev) => {
+      const thread = prev.find((t) => t.id === id);
+      if (thread) addBlocked(threadDedupKey(thread));
+      return prev.filter((t) => t.id !== id);
+    });
   };
 
   const handleFieldChange = (id, updates) => {
@@ -219,6 +245,7 @@ export default function App() {
             onThreadAdd={handleThreadAdd}
             onDeliverableToggle={handleDeliverableToggle}
             onDeliverableAdd={handleDeliverableAdd}
+            onNotADeal={handleNotADeal}
             gmailConnected={gmail.connected}
             gmailEmail={gmail.email}
           />
