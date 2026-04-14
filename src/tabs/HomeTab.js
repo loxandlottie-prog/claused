@@ -98,10 +98,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
       </div>
 
       <div className="thread-list-bar">
-        <span className="thread-list-count">
-          {filtered.length} brand{filtered.length !== 1 ? "s" : ""}
-          {filter !== "all" ? ` · ${STAT_FILTERS.find(s => s.key === filter)?.label}` : ""}
-        </span>
         <select
           className="date-select-inline"
           value={dateRange}

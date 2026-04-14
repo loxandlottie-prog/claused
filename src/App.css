@@ -378,19 +378,10 @@ textarea { resize: vertical; }
 .stat-value-green     { color: var(--green); }
 .stat-value-highlight { color: var(--yellow); }
 
-/* Thread list bar (count + date filter) */
+/* Thread list bar (date filter) */
 .thread-list-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.thread-list-count {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text3);
+  justify-content: flex-end;
 }
 .date-select-inline {
   appearance: none;
