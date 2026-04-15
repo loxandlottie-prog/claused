@@ -6,9 +6,9 @@ import AnalyticsTab from "./tabs/AnalyticsTab";
 import PasteModal from "./components/PasteModal";
 import PasswordGate from "./components/PasswordGate";
 
-// ─── localStorage keys (used as instant write-through cache) ─────────────────
-const LS_OVERRIDES = "inbora_overrides_v2";
-const LS_BLOCKED   = "inbora_blocked_v2";
+// ─── localStorage keys ────────────────────────────────────────────────────────
+const LS_OVERRIDES = "inbora_overrides";
+const LS_BLOCKED   = "inbora_blocked";
 
 // ─── Dedup key — mirrors api/gmail/threads.js logic ──────────────────────────
 const threadDedupKey = (t) =>
@@ -32,9 +32,26 @@ function migrateStatuses(overridesMap) {
 }
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
+// Thread IDs are 10+ hex chars. Anything else is a legacy brand-name key — drop it.
+const isThreadId = (k) => /^[0-9a-f]{10,}$/i.test(k);
+
 function lsGetOverrides() {
-  try { return migrateStatuses(JSON.parse(localStorage.getItem(LS_OVERRIDES) || "{}")); }
-  catch { return {}; }
+  try {
+    // Primary store (current key)
+    const primary = JSON.parse(localStorage.getItem(LS_OVERRIDES) || "{}");
+    // Temporary migration: pick up anything saved under the short-lived v2 key
+    const v2 = JSON.parse(localStorage.getItem("inbora_overrides_v2") || "{}");
+    // Merge: v2 is more recent so it wins on conflict
+    const merged = { ...primary, ...v2 };
+    // Keep only thread-ID keyed entries (drop legacy brand-name keys)
+    const clean = {};
+    Object.entries(merged).forEach(([k, v]) => { if (isThreadId(k)) clean[k] = v; });
+    migrateStatuses(clean);
+    // Persist the cleaned merged result and remove the stale v2 key
+    localStorage.setItem(LS_OVERRIDES, JSON.stringify(clean));
+    localStorage.removeItem("inbora_overrides_v2");
+    return clean;
+  } catch { return {}; }
 }
 function lsSetOverrides(map) {
   localStorage.setItem(LS_OVERRIDES, JSON.stringify(map));
@@ -126,12 +143,20 @@ export default function App() {
         fetch("/api/blocked").then((r) => r.ok ? r.json() : null).catch(() => null),
       ]);
 
-      // Server data wins — sync into memory and localStorage cache
-      if (serverOverrides) {
-        overridesRef.current = migrateStatuses(serverOverrides);
+      // Server data wins over localStorage — but only when the server actually returned
+      // something. null means the request failed (Supabase not set up, auth error, etc.)
+      // and we fall back to whatever is in localStorage.
+      // Note: we also trust an empty {} from the server once Supabase is wired up,
+      // because that means the user genuinely has no server-side overrides yet.
+      // The first save from any device will populate it.
+      if (serverOverrides !== null) {
+        // Merge: keep any local-only overrides that aren't on the server yet
+        // (handles the case where the user saved locally before Supabase was set up)
+        const merged = { ...overridesRef.current, ...serverOverrides };
+        overridesRef.current = migrateStatuses(merged);
         lsSetOverrides(overridesRef.current);
       }
-      if (serverBlocked) {
+      if (serverBlocked !== null) {
         blockedRef.current = new Set(serverBlocked);
         lsSetBlocked(blockedRef.current);
       }
