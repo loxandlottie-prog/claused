@@ -339,13 +339,13 @@ textarea { resize: vertical; }
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -376,10 +376,10 @@ textarea { resize: vertical; }
   white-space: nowrap;
 }
 .stat-value {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--text);
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
 }
 .stat-value-alert     { color: var(--red); }
 .stat-value-green     { color: var(--green); }
