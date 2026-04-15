@@ -30,7 +30,7 @@ function priorityScore(t) {
   switch (t.status) {
     case "new":         return 500  + stalePenalty;
     case "negotiating": return 1000 - valueBoost + stalePenalty;
-    case "confirmed":   return 2000 - valueBoost;
+    case "in-progress":   return 2000 - valueBoost;
     case "completed":   return 9000;
     case "paid":        return 9500;
     case "declined":    return 9800;
@@ -80,7 +80,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   const newCount         = dateFiltered.filter((t) => t.status === "new").length;
   const negotiatingCount = dateFiltered.filter((t) => t.status === "negotiating").length;
-  const confirmedCount   = dateFiltered.filter((t) => t.status === "confirmed").length;
+  const inProgressCount   = dateFiltered.filter((t) => t.status === "in-progress").length;
   const completedCount   = dateFiltered.filter((t) => t.status === "completed").length;
   const paidCount        = dateFiltered.filter((t) => t.status === "paid").length;
   const declinedCount    = dateFiltered.filter((t) => t.status === "declined").length;
@@ -92,7 +92,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   const newDeals         = sorted.filter((t) => t.status === "new");
   const negotiatingDeals = sorted.filter((t) => t.status === "negotiating");
-  const confirmedDeals   = sorted.filter((t) => t.status === "confirmed");
+  const inProgressDeals   = sorted.filter((t) => t.status === "in-progress");
   const completedDeals   = sorted.filter((t) => t.status === "completed");
   const paidDeals        = sorted.filter((t) => t.status === "paid");
   const declinedDeals    = sorted.filter((t) => t.status === "declined");
@@ -104,7 +104,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
     { key: "new",         label: "New",          count: newCount,            highlight: newCount > 0        },
     { key: "declined",    label: "Declined",     count: declinedCount,      highlight: false               },
     { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false               },
-    { key: "confirmed",   label: "In-Progress",  count: confirmedCount,     highlight: confirmedCount > 0  },
+    { key: "in-progress",   label: "In-Progress",  count: inProgressCount,     highlight: inProgressCount > 0  },
     { key: "completed",   label: "Completed",    count: completedCount,     highlight: false               },
     { key: "paid",        label: "Paid",         count: paidCount,          highlight: true                },
     { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false              },
@@ -179,12 +179,12 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
                 {negotiatingDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
-            {confirmedDeals.length > 0 && (
+            {inProgressDeals.length > 0 && (
               <>
-                <div className="section-header section-header-confirmed">
-                  In-Progress <span className="section-count">{confirmedDeals.length}</span>
+                <div className="section-header section-header-in-progress">
+                  In-Progress <span className="section-count">{inProgressDeals.length}</span>
                 </div>
-                {confirmedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
+                {inProgressDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
             )}
             {completedDeals.length > 0 && (

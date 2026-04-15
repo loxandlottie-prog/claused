@@ -4,7 +4,7 @@ import { daysSince, formatCurrency, fmtDate } from "../utils";
 const STATUS = {
   new:         { label: "New",         cls: "status-yellow"  },
   negotiating: { label: "Negotiating", cls: "status-blue"    },
-  confirmed:   { label: "In-Progress", cls: "status-teal"    },
+  "in-progress": { label: "In-Progress", cls: "status-teal"    },
   completed:   { label: "Completed",   cls: "status-purple"  },
   paid:        { label: "Paid",        cls: "status-green"   },
   declined:    { label: "Declined",    cls: "status-gray"    },
@@ -411,11 +411,11 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
                 )}
                 {thread.status === "negotiating" && (
                   <>
-                    <button className="card-action-btn card-action-advance" onClick={() => onStatusChange(thread.id, "confirmed")}>In-Progress</button>
+                    <button className="card-action-btn card-action-advance" onClick={() => onStatusChange(thread.id, "in-progress")}>In-Progress</button>
                     <button className="card-action-btn card-action-decline" onClick={() => onStatusChange(thread.id, "declined")}>Decline</button>
                   </>
                 )}
-                {thread.status === "confirmed" && (
+                {thread.status === "in-progress" && (
                   <button className="card-action-btn card-action-advance" onClick={() => onStatusChange(thread.id, "completed")}>Completed</button>
                 )}
                 {thread.status === "completed" && (

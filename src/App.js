@@ -22,6 +22,7 @@ const STATUS_MIGRATION = {
   in_progress: "negotiating", accepted: "negotiating",
   deal_closed: "completed", deal_passed: "declined",
   pending: "new", active: "negotiating", closed: "completed", rejected: "declined",
+  confirmed: "in-progress",
 };
 
 function migrateStatuses(overridesMap) {

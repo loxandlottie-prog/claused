@@ -644,8 +644,8 @@ textarea { resize: vertical; }
 .section-header-new         .section-count { color: var(--blue); border-color: var(--blue-mid); background: var(--blue-dim); }
 .section-header-negotiating { color: var(--primary); }
 .section-header-negotiating .section-count { color: var(--primary); border-color: var(--primary-mid); background: var(--primary-light); }
-.section-header-confirmed   { color: #4338CA; }
-.section-header-confirmed   .section-count { color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; }
+.section-header-in-progress   { color: #4338CA; }
+.section-header-in-progress   .section-count { color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; }
 .section-header-paid        { color: #065F46; }
 .section-header-paid        .section-count { color: #065F46; border-color: #A7F3D0; background: var(--green-dim); }
 
