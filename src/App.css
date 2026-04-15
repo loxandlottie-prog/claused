@@ -368,11 +368,12 @@ textarea { resize: vertical; }
   background: var(--red-dim);
 }
 .stat-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.3px;
   color: var(--text3);
+  white-space: nowrap;
 }
 .stat-value {
   font-size: 26px;
@@ -640,14 +641,16 @@ textarea { resize: vertical; }
 .section-header-urgent      .section-count { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
 .section-header-active      .section-count { color: var(--purple); border-color: var(--purple-mid); background: var(--purple-light); }
 /* New status section headers */
-.section-header-new         { color: var(--blue); }
-.section-header-new         .section-count { color: var(--blue); border-color: var(--blue-mid); background: var(--blue-dim); }
+.section-header-new         { color: #B45309; }
+.section-header-new         .section-count { color: #B45309; border-color: #FDE68A; background: #FFFBEB; }
 .section-header-negotiating { color: var(--primary); }
 .section-header-negotiating .section-count { color: var(--primary); border-color: var(--primary-mid); background: var(--primary-light); }
 .section-header-in-progress   { color: #4338CA; }
 .section-header-in-progress   .section-count { color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; }
 .section-header-paid        { color: #065F46; }
 .section-header-paid        .section-count { color: #065F46; border-color: #A7F3D0; background: var(--green-dim); }
+.section-header-declined    { color: #B91C1C; }
+.section-header-declined    .section-count { color: #B91C1C; border-color: #FECACA; background: var(--red-dim); }
 
 /* Stat grid row (grid + legend icon) */
 .stat-grid-row { display: flex; align-items: flex-start; gap: 8px; }
@@ -899,12 +902,12 @@ textarea { resize: vertical; }
   white-space: nowrap;
 }
 .status-red    { background: var(--red-dim);      color: var(--red);      border: 1px solid #FECACA; }
-.status-yellow { background: var(--blue-dim);    color: #1D4ED8;         border: 1px solid var(--blue-mid); }  /* "New" — blue */
+.status-yellow { background: #FFFBEB;            color: #B45309;         border: 1px solid #FDE68A; }  /* "New" — amber */
 .status-blue   { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-mid); } /* "Negotiating" — teal */
 .status-green  { background: var(--green-dim);   color: #065F46;         border: 1px solid #A7F3D0; }   /* "Paid" — green */
-.status-teal   { background: #EEF2FF;            color: #4338CA;         border: 1px solid #C7D2FE; }   /* "Confirmed" — indigo */
+.status-teal   { background: #EEF2FF;            color: #4338CA;         border: 1px solid #C7D2FE; }   /* "In-Progress" — indigo */
 .status-purple { background: var(--violet-dim);  color: var(--violet);   border: 1px solid var(--violet-mid); } /* "Completed" — violet */
-.status-gray   { background: #F3F4F6;            color: #6B7280;         border: 1px solid #D1D5DB; }   /* "Declined" — gray */
+.status-gray   { background: var(--red-dim);     color: var(--red);      border: 1px solid #FECACA; }   /* "Declined" — red */
 
 /* Status picker */
 .status-picker { position: relative; }
@@ -956,12 +959,12 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 .status-menu-dot.status-red    { background: var(--red); }
-.status-menu-dot.status-yellow { background: var(--blue); }         /* New — blue */
+.status-menu-dot.status-yellow { background: #F59E0B; }            /* New — amber */
 .status-menu-dot.status-blue   { background: var(--primary); }     /* Negotiating — teal */
 .status-menu-dot.status-green  { background: var(--green); }       /* Paid — green */
-.status-menu-dot.status-teal   { background: #4338CA; }            /* Confirmed — indigo */
+.status-menu-dot.status-teal   { background: #4338CA; }            /* In-Progress — indigo */
 .status-menu-dot.status-purple { background: var(--violet); }      /* Completed — violet */
-.status-menu-dot.status-gray   { background: #9CA3AF; }
+.status-menu-dot.status-gray   { background: var(--red); }         /* Declined — red */
 .status-menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
 .status-menu-item-remove { color: var(--red); }
 .status-menu-item-remove:hover { background: #fee2e2; color: var(--red); }

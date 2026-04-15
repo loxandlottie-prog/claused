@@ -205,7 +205,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
             )}
             {declinedDeals.length > 0 && (
               <>
-                <div className="section-header section-header-muted">
+                <div className="section-header section-header-declined">
                   Declined <span className="section-count">{declinedDeals.length}</span>
                 </div>
                 {declinedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
