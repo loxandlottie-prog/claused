@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import BrandCard from "../components/BrandCard";
-import GoalBar from "../components/GoalBar";
 import { daysSince } from "../utils";
 
 const DATE_OPTIONS = [
@@ -83,7 +82,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   const inProgressCount   = dateFiltered.filter((t) => t.status === "in-progress").length;
   const completedCount   = dateFiltered.filter((t) => t.status === "completed").length;
   const paidCount        = dateFiltered.filter((t) => t.status === "paid").length;
-  const declinedCount    = dateFiltered.filter((t) => t.status === "declined").length;
 
   const filtered = dateFiltered.filter((t) =>
     filter === "all" ? true : t.status === filter
@@ -99,15 +97,13 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   const cardProps = { onStatusChange, onFieldChange, onDeliverableToggle, onDeliverableAdd, onNotADeal, gmailEmail };
 
-  // Confirmed and Declined are not primary filter cards per spec
   const STAT_FILTERS = [
-    { key: "new",         label: "New",          count: newCount,            highlight: newCount > 0        },
-    { key: "declined",    label: "Declined",     count: declinedCount,      highlight: false               },
-    { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false               },
-    { key: "in-progress",   label: "In-Progress",  count: inProgressCount,     highlight: inProgressCount > 0  },
-    { key: "completed",   label: "Completed",    count: completedCount,     highlight: false               },
-    { key: "paid",        label: "Paid",         count: paidCount,          highlight: true                },
-    { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false              },
+    { key: "new",         label: "New",         count: newCount,            highlight: newCount > 0       },
+    { key: "negotiating", label: "Negotiating", count: negotiatingCount,   highlight: false              },
+    { key: "in-progress", label: "In Progress", count: inProgressCount,    highlight: inProgressCount > 0 },
+    { key: "completed",   label: "Completed",   count: completedCount,     highlight: false              },
+    { key: "paid",        label: "Paid",        count: paidCount,          highlight: true               },
+    { key: "all",         label: "Total",       count: dateFiltered.length, highlight: false             },
   ];
 
   if (threads.length === 0) {
@@ -124,7 +120,6 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   return (
     <div className="home-page">
-      <GoalBar threads={threads} />
 
       <div className="stat-grid-row">
         <div className="stat-grid">
