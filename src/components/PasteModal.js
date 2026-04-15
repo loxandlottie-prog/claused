@@ -4,7 +4,7 @@ import { parseThread } from "../utils";
 const STATUS_OPTIONS = [
   { value: "new",         label: "New"         },
   { value: "negotiating", label: "Negotiating" },
-  { value: "confirmed",   label: "Confirmed"   },
+  { value: "confirmed",   label: "In-Progress" },
   { value: "completed",   label: "Completed"   },
   { value: "paid",        label: "Paid"        },
   { value: "declined",    label: "Declined"    },

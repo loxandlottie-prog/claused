@@ -13,11 +13,11 @@ const DATE_OPTIONS = [
 
 const STATUS_TIPS = [
   { label: "New",         tip: "Inbound opportunity — you haven't meaningfully engaged yet."          },
+  { label: "Declined",    tip: "Deal is dead — you passed, they passed, or it fell through."          },
   { label: "Negotiating", tip: "Active back-and-forth on rates, deliverables, or terms."              },
-  { label: "Confirmed",   tip: "Deal agreed. Scope, rate, and terms are locked in."                   },
+  { label: "In-Progress", tip: "Deal agreed. Scope, rate, and terms are locked in."                   },
   { label: "Completed",   tip: "Deliverables done, but payment may still be outstanding."             },
   { label: "Paid",        tip: "Payment received. The deal is fully finished."                        },
-  { label: "Declined",    tip: "Deal is dead — you passed, they passed, or it fell through."          },
 ];
 
 // Lower score = shown first.
@@ -101,12 +101,12 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
 
   // Confirmed and Declined are not primary filter cards per spec
   const STAT_FILTERS = [
-    { key: "new",         label: "New",         count: newCount,            highlight: newCount > 0        },
+    { key: "new",         label: "New",          count: newCount,            highlight: newCount > 0        },
+    { key: "declined",    label: "Declined",     count: declinedCount,      highlight: false               },
     { key: "negotiating", label: "Negotiating",  count: negotiatingCount,   highlight: false               },
-    { key: "confirmed",   label: "Confirmed",    count: confirmedCount,     highlight: confirmedCount > 0  },
+    { key: "confirmed",   label: "In-Progress",  count: confirmedCount,     highlight: confirmedCount > 0  },
     { key: "completed",   label: "Completed",    count: completedCount,     highlight: false               },
     { key: "paid",        label: "Paid",         count: paidCount,          highlight: true                },
-    { key: "declined",    label: "Declined",     count: declinedCount,      highlight: false               },
     { key: "all",         label: "Total",        count: dateFiltered.length, highlight: false              },
   ];
 
@@ -182,7 +182,7 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
             {confirmedDeals.length > 0 && (
               <>
                 <div className="section-header section-header-confirmed">
-                  Confirmed <span className="section-count">{confirmedDeals.length}</span>
+                  In-Progress <span className="section-count">{confirmedDeals.length}</span>
                 </div>
                 {confirmedDeals.map((t) => <BrandCard key={t.id} thread={t} {...cardProps} />)}
               </>
