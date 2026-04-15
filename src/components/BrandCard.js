@@ -4,7 +4,7 @@ import { daysSince, formatCurrency, fmtDate } from "../utils";
 const STATUS = {
   new:         { label: "New",         cls: "status-yellow"  },
   negotiating: { label: "Negotiating", cls: "status-blue"    },
-  "in-progress": { label: "In-Progress", cls: "status-teal"    },
+  "in-progress": { label: "In Progress", cls: "status-teal"    },
   completed:   { label: "Completed",   cls: "status-purple"  },
   paid:        { label: "Paid",        cls: "status-green"   },
   declined:    { label: "Declined",    cls: "status-gray"    },
@@ -262,7 +262,7 @@ export default function BrandCard({ thread, onStatusChange, onFieldChange, onDel
   const saveContact = (field, value) => onFieldChange(thread.id, { contact: { ...thread.contact, [field]: value } });
 
   return (
-    <div className="brand-card" ref={cardRef}>
+    <div className={`brand-card brand-card-${thread.status}`} ref={cardRef}>
       <div className="brand-card-main">
         <BrandLogo domain={thread.domain} logo={thread.logo} logoColor={thread.logoColor} />
 
