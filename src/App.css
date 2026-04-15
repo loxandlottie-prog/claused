@@ -178,20 +178,18 @@ textarea { resize: vertical; }
 
 /* ─── Goal Bar ───────────────────────────────────────────────── */
 .goal-bar {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 20px;
   box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
+
+/* Unset prompt */
 .goal-bar-unset {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   cursor: pointer;
   text-align: left;
   color: var(--text3);
@@ -200,17 +198,10 @@ textarea { resize: vertical; }
   transition: border-color 0.15s, color 0.15s;
 }
 .goal-bar-unset:hover { border-color: var(--primary); color: var(--text2); }
-.goal-set-arrow { margin-left: auto; font-size: 14px; opacity: 0.5; }
+.goal-unset-text { font-size: 12.5px; color: var(--text3); }
+.goal-set-arrow { margin-left: auto; font-size: 13px; opacity: 0.4; }
 
-/* Top row: year chip + title + mode toggle + clear */
-.goal-bar-top-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.goal-bar-left  { display: flex; align-items: center; gap: 8px; flex: 1; }
-.goal-bar-right { display: flex; align-items: center; gap: 6px; }
-
+/* Year chip */
 .goal-year-chip {
   font-size: 10px;
   font-weight: 700;
@@ -223,126 +214,132 @@ textarea { resize: vertical; }
   padding: 2px 6px;
   flex-shrink: 0;
 }
-.goal-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+
+/* Track area — fills available space */
+.goal-tracks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-/* Mode toggle pills */
-.goal-mode-toggle {
+.goal-track-row {
   display: flex;
   align-items: center;
-  gap: 2px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 2px;
-  margin-left: auto;
-}
-.goal-mode-btn {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--text3);
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-.goal-mode-btn:hover { color: var(--text2); }
-.goal-mode-active { background: var(--surface); color: var(--primary) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-/* Individual goal row (used in both "single" and "both" modes) */
-.goal-row { display: flex; flex-direction: column; gap: 6px; }
-.goal-row-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
-.goal-row-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text3);
+
+.goal-track-label {
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  flex-shrink: 0;
+  width: 48px;
 }
 
-.goal-earned {
-  font-size: 14px;
+/* Progress track */
+.goal-track {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.goal-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Inline stats: "$12k of $50k · 25%" */
+.goal-track-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.goal-earned-sm {
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.2px;
 }
-.goal-of {
-  font-size: 11px;
-  color: var(--text3);
-}
-.goal-target {
-  font-size: 13px;
+.goal-of-sm { font-size: 11px; color: var(--text3); }
+.goal-target-inline {
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text3);
-  border-bottom: 1px dashed var(--border);
-  transition: color 0.15s, border-color 0.15s;
+  color: var(--text2);
+  border-bottom: 1px dashed var(--border2);
+  transition: color 0.12s, border-color 0.12s;
 }
-.goal-target:hover { color: var(--primary); border-color: var(--primary); cursor: pointer; }
-.goal-unset-inline { font-style: normal; color: var(--text3); font-size: 12px; }
-.goal-edit-inline  { display: flex; align-items: center; gap: 1px; }
-.goal-edit-prefix  { font-size: 13px; font-weight: 600; color: var(--text2); }
+.goal-target-inline:hover { color: var(--primary); border-color: var(--primary); }
+.goal-pct-sm {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.2px;
+}
+.goal-achieved-txt { color: #0F766E; }
+.goal-unset-inline { font-style: normal; color: var(--text3); font-size: 11px; }
+
+/* Inline editing */
+.goal-edit-inline  { display: inline-flex; align-items: center; gap: 1px; }
+.goal-edit-prefix  { font-size: 12px; font-weight: 600; color: var(--text2); }
 .goal-edit-input {
-  width: 72px;
-  font-size: 13px;
+  width: 60px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text);
   border: none;
-  border-bottom: 1px solid var(--primary);
+  border-bottom: 1.5px solid var(--primary);
   background: transparent;
   outline: none;
   padding: 0 2px;
 }
 
-/* Progress track */
-.goal-track {
-  height: 8px;
-  background: #E5E7EB;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.goal-fill {
-  height: 8px;
-  border-radius: 999px;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.goal-bar-footer {
+/* Controls: mode toggle + clear */
+.goal-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
 }
-.goal-count {
-  font-size: 11px;
+.goal-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+}
+.goal-mode-btn {
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text3);
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
 }
-.goal-pct {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.2px;
-  transition: color 0.4s;
-}
+.goal-mode-btn:hover { color: var(--text2); }
+.goal-mode-active { background: var(--surface); color: var(--primary) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
 .goal-clear {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text3);
   line-height: 1;
   opacity: 0;
   transition: opacity 0.15s;
   cursor: pointer;
+  padding: 2px 4px;
 }
-.goal-bar:hover .goal-clear { opacity: 0.6; }
+.goal-bar:hover .goal-clear { opacity: 0.5; }
 .goal-clear:hover { opacity: 1 !important; color: var(--text); }
 
 /* Stat grid */
