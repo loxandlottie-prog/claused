@@ -174,18 +174,14 @@ textarea { resize: vertical; }
 }
 
 /* ─── Home Page ──────────────────────────────────────────────── */
-.home-page { display: flex; flex-direction: column; gap: 20px; }
+.home-page { display: flex; flex-direction: column; gap: 16px; }
 
 /* ─── Goal Bar ───────────────────────────────────────────────── */
 .goal-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  padding: 0 4px 4px;
 }
 
 /* Unset prompt */
@@ -193,11 +189,11 @@ textarea { resize: vertical; }
   cursor: pointer;
   text-align: left;
   color: var(--text3);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
-  transition: border-color 0.15s, color 0.15s;
+  transition: color 0.15s;
 }
-.goal-bar-unset:hover { border-color: var(--primary); color: var(--text2); }
+.goal-bar-unset:hover { color: var(--primary); }
 .goal-unset-text { font-size: 12.5px; color: var(--text3); }
 .goal-set-arrow { margin-left: auto; font-size: 13px; opacity: 0.4; }
 

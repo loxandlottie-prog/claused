@@ -84,31 +84,6 @@ export default function GoalBar({ threads }) {
   const showRevenue = mode === "revenue" || mode === "both";
   const showCount   = mode === "count"   || mode === "both";
 
-  function InlineTarget({ field, goal, unit, achieved, pct }) {
-    if (editingField === field) {
-      return (
-        <span className="goal-edit-inline">
-          {unit === "$" && <span className="goal-edit-prefix">$</span>}
-          <input
-            ref={field === "revenue" ? revInputRef : cntInputRef}
-            className="goal-edit-input"
-            type="number"
-            onBlur={() => saveEdit(field)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") saveEdit(field); }}
-            placeholder={unit === "$" ? "50000" : "10"}
-          />
-        </span>
-      );
-    }
-    return (
-      <button className="goal-target-inline" onClick={() => startEdit(field)} title="Click to edit goal">
-        {goal != null
-          ? (achieved ? <span className="goal-achieved-txt">Goal reached ✓</span> : `${Math.round(pct)}%`)
-          : <em className="goal-unset-inline">set goal</em>}
-      </button>
-    );
-  }
-
   return (
     <div className="goal-bar goal-bar-active">
       <span className="goal-year-chip">{year}</span>
