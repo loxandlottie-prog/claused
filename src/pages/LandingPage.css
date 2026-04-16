@@ -1,0 +1,319 @@
+/* ─── Landing Page ───────────────────────────────────────────────────────── */
+
+.lp {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111111;
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Nav ─────────────────────────────────────────────────────────────────── */
+
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #efefef;
+}
+
+.lp-wordmark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111111;
+  text-decoration: none;
+}
+
+.lp-bracket {
+  color: #7C5CFC;
+}
+
+.lp-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.lp-nav-link {
+  font-size: 14px;
+  color: #111111;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.lp-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111111;
+}
+
+.lp-btn-ghost {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111111;
+  text-decoration: none;
+  padding: 7px 16px;
+  border: 1px solid #efefef;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.lp-btn-ghost:hover {
+  border-color: #d0d0d0;
+  background: #fafafa;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+.lp-btn-primary {
+  display: inline-block;
+  background: #7C5CFC;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 10px;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.lp-btn-primary:hover {
+  background: #6a4ae0;
+}
+
+.lp-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.lp-demo-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #555555;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.lp-demo-link:hover {
+  color: #111111;
+}
+
+/* ─── Hero ────────────────────────────────────────────────────────────────── */
+
+.lp-hero {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 48px;
+}
+
+.lp-headline {
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: #111111;
+  margin-bottom: 24px;
+  max-width: 820px;
+}
+
+.lp-subheadline {
+  font-size: clamp(16px, 2vw, 20px);
+  color: #555555;
+  line-height: 1.6;
+  margin-bottom: 48px;
+  max-width: 560px;
+}
+
+.lp-hero-ctas {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ─── Features ────────────────────────────────────────────────────────────── */
+
+.lp-features {
+  padding: 120px 48px;
+  border-top: 1px solid #efefef;
+}
+
+.lp-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 64px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.lp-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #efefef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.lp-feature-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #111111;
+  margin-bottom: 10px;
+}
+
+.lp-feature-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #666666;
+}
+
+/* ─── Social proof ────────────────────────────────────────────────────────── */
+
+.lp-proof {
+  padding: 80px 48px;
+  text-align: center;
+  border-top: 1px solid #efefef;
+}
+
+.lp-proof-line {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aaaaaa;
+  margin-bottom: 40px;
+}
+
+.lp-quote {
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 500;
+  color: #111111;
+  font-style: normal;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.lp-quote cite {
+  display: block;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #aaaaaa;
+  font-style: normal;
+  font-weight: 400;
+}
+
+/* ─── Bottom CTA ──────────────────────────────────────────────────────────── */
+
+.lp-cta-section {
+  padding: 120px 48px;
+  text-align: center;
+  border-top: 1px solid #efefef;
+}
+
+.lp-cta-headline {
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111111;
+  margin-bottom: 40px;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
+
+.lp-footer {
+  padding: 40px 48px;
+  border-top: 1px solid #efefef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lp-footer-wordmark {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111111;
+}
+
+.lp-footer-copy {
+  font-size: 13px;
+  color: #aaaaaa;
+}
+
+/* ─── Mobile ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .lp-nav {
+    padding: 0 20px;
+  }
+
+  .lp-hero {
+    padding: 60px 24px;
+    min-height: calc(100svh - 64px);
+  }
+
+  .lp-br {
+    display: none;
+  }
+
+  .lp-hero-ctas {
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .lp-btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .lp-features {
+    padding: 80px 24px;
+  }
+
+  .lp-features-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .lp-proof {
+    padding: 60px 24px;
+  }
+
+  .lp-cta-section {
+    padding: 80px 24px;
+  }
+
+  .lp-footer {
+    padding: 32px 24px;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}

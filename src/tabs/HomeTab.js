@@ -121,34 +121,31 @@ export default function HomeTab({ threads, onStatusChange, onFieldChange, onDeli
   return (
     <div className="home-page">
 
-      <div className="stat-grid-row">
-        <div className="stat-grid">
+      <div className="filter-strip">
+        <div className="filter-chips">
           {STAT_FILTERS.map((s) => (
             <button
               key={s.key}
-              className={`stat-card stat-card-btn ${filter === s.key ? "stat-card-active" : ""}`}
+              className={`filter-chip ${filter === s.key ? "filter-chip-active" : ""}${s.highlight && s.count > 0 && filter !== s.key ? " filter-chip-alert" : ""}`}
               onClick={() => setFilter(s.key)}
             >
-              <span className="stat-label">{s.label}</span>
-              <span className={`stat-value ${s.highlight && s.count > 0 ? "stat-value-highlight" : ""}`}>
-                {s.count}
-              </span>
+              {s.label}
+              <span className="filter-chip-count">{s.count}</span>
             </button>
           ))}
         </div>
-        <StatusLegend />
-      </div>
-
-      <div className="thread-list-bar">
-        <select
-          className="date-select-inline"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-        >
-          {DATE_OPTIONS.map((o) => (
-            <option key={o.key} value={o.key}>{o.label}</option>
-          ))}
-        </select>
+        <div className="filter-strip-end">
+          <select
+            className="date-select-inline"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+          >
+            {DATE_OPTIONS.map((o) => (
+              <option key={o.key} value={o.key}>{o.label}</option>
+            ))}
+          </select>
+          <StatusLegend />
+        </div>
       </div>
 
       <div className="thread-list">

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./App.css";
 import { threads as demoThreads } from "./data";
 import HomeTab from "./tabs/HomeTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
 import PasteModal from "./components/PasteModal";
-import PasswordGate from "./components/PasswordGate";
+import { logout } from "./auth";
 
 // ─── localStorage keys ────────────────────────────────────────────────────────
 const LS_OVERRIDES = "inbora_overrides";
@@ -95,9 +96,7 @@ function applyOverrides(threads, overridesMap) {
 }
 
 export default function App() {
-  const [unlocked, setUnlocked] = useState(
-    sessionStorage.getItem("inbora_unlocked") === "1"
-  );
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
   const [threads, setThreads] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -176,8 +175,6 @@ export default function App() {
 
   // Check connection status + handle OAuth return
   useEffect(() => {
-    if (!unlocked) return;
-
     const params = new URLSearchParams(window.location.search);
     if (params.get("gmail") === "error") setGmailError(true);
     if (params.has("gmail")) window.history.replaceState({}, "", window.location.pathname);
@@ -189,7 +186,7 @@ export default function App() {
         if (data.connected) loadGmailThreads();
       })
       .catch(() => setGmail({ connected: false, email: null, loading: false }));
-  }, [unlocked]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleConnect = () => { window.location.href = "/api/auth/google"; };
   const handleDisconnect = () => { window.location.href = "/api/auth/disconnect"; };
@@ -248,7 +245,10 @@ export default function App() {
     });
   };
 
-  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+  const handleSignOut = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <div className="app">
@@ -296,6 +296,9 @@ export default function App() {
             )}
             <button className="btn-primary" onClick={() => setShowModal(true)}>
               Paste Thread
+            </button>
+            <button className="btn-ghost gmail-disconnect" onClick={handleSignOut}>
+              Sign out
             </button>
           </div>
         </div>

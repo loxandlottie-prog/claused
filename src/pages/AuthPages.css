@@ -1,0 +1,159 @@
+/* ─── Shared auth page styles (Login + Signup) ───────────────────────────── */
+
+.auth-page {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111111;
+  background: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Auth nav ────────────────────────────────────────────────────────────── */
+
+.auth-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  height: 64px;
+  border-bottom: 1px solid #efefef;
+}
+
+.auth-wordmark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111111;
+  text-decoration: none;
+}
+
+.auth-bracket {
+  color: #7C5CFC;
+}
+
+/* ─── Auth body ───────────────────────────────────────────────────────────── */
+
+.auth-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border: 1px solid #efefef;
+  border-radius: 16px;
+  padding: 40px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #111111;
+  margin-bottom: 8px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #777777;
+  margin-bottom: 32px;
+}
+
+/* ─── Form ────────────────────────────────────────────────────────────────── */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333333;
+}
+
+.auth-input {
+  padding: 10px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #111111;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input:focus {
+  border-color: #7C5CFC;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+}
+
+.auth-input.error {
+  border-color: #ef4444;
+}
+
+.auth-error {
+  font-size: 13px;
+  color: #ef4444;
+  margin-top: -4px;
+}
+
+.auth-submit {
+  margin-top: 8px;
+  padding: 11px 20px;
+  background: #7C5CFC;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.auth-submit:hover {
+  background: #6a4ae0;
+}
+
+.auth-submit:active {
+  transform: scale(0.98);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Footer link ─────────────────────────────────────────────────────────── */
+
+.auth-footer-text {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #777777;
+}
+
+.auth-footer-text a {
+  color: #7C5CFC;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-footer-text a:hover {
+  text-decoration: underline;
+}
